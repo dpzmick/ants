@@ -1,7 +1,7 @@
 -module(rough).
--compile(export_all).
+-export([rough/2, pound/1, stopall/1]).
 
-rough(Send, Id) ->
+rough(Send, Id, Delay) ->
     case Send of
         undefined -> undefined;
         _ -> Send ! do_a_thing
@@ -9,13 +9,13 @@ rough(Send, Id) ->
     receive
         do_a_thing ->
             io:format("doing a thing, Id: ~p~n", [Id]),
-            timer:sleep(1000),
+            timer:sleep(Delay),
             rough(self(), Id);
         stop ->
             io:format("stopping ~p~n", [Id])
     end.
 
-rough(Id) -> rough(undefined, Id).
+rough(Id, Delay) -> rough(undefined, Id, Delay).
 
 pound(Num) ->
     Pids = [spawn(rough, rough, [X]) || X <- lists:seq(1,Num)],
