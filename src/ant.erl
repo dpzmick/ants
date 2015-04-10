@@ -3,44 +3,50 @@
 
 %% pick one of these randomly and try to move to it
 priv_pick_neighbor(Neighbors) ->
-    Cells = lists:map(
-          fun({_,Cell}) -> Cell end,
-          dict:to_list(Neighbors)),
+    Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
     Index = random:uniform(length(Cells)),
     lists:nth(Index, Cells).
 
-priv_got_neighbors(Neighbors, Id) ->
+priv_got_neighbors(Neighbors) ->
     Choice = priv_pick_neighbor(Neighbors),
-    cell:move_ant_to(Choice, {Id, self()}).
+    cell:move_ant_to(Choice, self()).
 
-loop({Id, CurrentCell}) ->
+priv_statify(Id, CurrentCell) -> {Id, CurrentCell}.
+
+loop(State = {Id, CurrentCell}) ->
     receive
         wakeup_and_move ->
-            case CurrentCell of
-                undefined -> ok;
-                _ -> cell:tell_neighbors(CurrentCell, {Id, self()}),
-                     loop({Id, CurrentCell})
-            end;
+            if
+                CurrentCell =:= undefined -> ok;
+                true -> cell:tell_neighbors(CurrentCell, self())
+            end,
+            loop(State);
 
         {neighbors, Neighbors} ->
-            priv_got_neighbors(Neighbors, Id),
-            loop({Id, CurrentCell});
+            priv_got_neighbors(Neighbors),
+            loop(State);
 
         {move_to, Cell} ->
-            loop({Id, Cell})
+            loop(priv_statify(Id, Cell));
+
+        {tell_id, To} -> To ! {told_id, Id}, loop(State)
     end.
 
 %% public api
 start(Id) ->
-    {Id, spawn(fun () -> loop({Id, undefined}) end)}.
+    spawn(fun () -> loop({Id, undefined}) end).
 
-wakeup_and_move({_, Ant}) ->
+wakeup_and_move(Ant) ->
     Ant ! wakeup_and_move.
 
-tell_neighbors({_,Ant}, Neighbors) ->
+tell_neighbors(Ant, Neighbors) ->
     Ant ! {neighbors, Neighbors}.
 
-you_moved({_, Ant}, ToCell) ->
+you_moved(Ant, ToCell) ->
     Ant ! {move_to, ToCell}.
 
-ant_id({Id, _}) -> Id.
+ant_id(Ant) ->
+    Ant ! {tell_id, self()},
+    receive
+        {told_id, Id} -> Id
+    end.

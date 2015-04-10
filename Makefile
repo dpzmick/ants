@@ -1,5 +1,8 @@
 all:
 	erl -make
 
-run:
-	erl -pa ebin/ +P 500000
+run: all
+	erl -pa ebin/
+
+bigrun: all
+	erl -pa ebin/ +P 134217727

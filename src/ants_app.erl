@@ -1,5 +1,5 @@
 -module(ants_app).
--export([start/2, stop/1]).
+-export([start/3, stop/1]).
 
 xy_toIndex(Xmax, X, Y) -> X + Y*Xmax.
 
@@ -38,18 +38,21 @@ loop(Ant) ->
     timer:sleep(5),
     loop(Ant).
 
-app(Xmax, Ymax, Ants) ->
+app(Xmax, Ymax, NumAnts) ->
     CellCoords = [{X,Y} || X <- lists:seq(1,Xmax), Y <- lists:seq(1,Ymax)],
     Cells = array:from_list([cell:start(Id) || Id <- CellCoords]),
     iter(Xmax, Ymax, Cells, 0, 0),
-    lists:map(
-      fun ({X, Ant}) -> cell:move_ant_to(array:get(X, Cells), Ant) end,
-      lists:zip(lists:seq(1,100), Ants)),
-    lists:map(fun (Ant) -> spawn(fun () -> loop(Ant) end) end, Ants).
 
-start(Xmax, Ymax) ->
-    Ants = [ant:start(X) || X <- lists:seq(1,100)],
-    Pid = spawn(fun () -> app(Xmax, Ymax, Ants) end),
+    lists:map(
+      fun (X) ->
+              A = ant:start(X),
+              cell:move_ant_to(array:get(X, Cells), A),
+              spawn(fun () -> loop(A) end)
+      end,
+      lists:seq(1,NumAnts)).
+
+start(Xmax, Ymax, NumAnts) ->
+    Pid = spawn(fun () -> app(Xmax, Ymax, NumAnts) end),
     Pid.
 
 stop(Pid1) ->

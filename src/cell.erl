@@ -1,5 +1,5 @@
 -module(cell).
--export([start/1, register_neighbor/3, tell_neighbors/2, move_ant_to/2, remove_ant_from/2]).
+-export([start/1, register_neighbor/3, tell_neighbors/2, move_ant_to/2]).
 
 opposite_direction(Direction) ->
     case Direction of
@@ -22,8 +22,6 @@ priv_move_ant_to(State, Ant) ->
     end,
     loop(State).
 
-priv_remove_ant({D, _, Id}) -> loop({D, undefined, Id}).
-
 loop(State) ->
     receive
         {Cell, register_neighbor, Direction, FollowupDesired} ->
@@ -39,9 +37,7 @@ loop(State) ->
             ant:tell_neighbors(Ant, D),
             loop(State);
 
-        {Ant, move_me_to_you} -> priv_move_ant_to(State, Ant);
-
-        {_, remove_me_from_you} -> priv_remove_ant(State)
+        {Ant, move_me_to_you} -> priv_move_ant_to(State, Ant)
     end.
 
 %% public api
@@ -56,6 +52,3 @@ tell_neighbors(Cell, ToWho) ->
 
 move_ant_to(Cell, Ant) ->
     Cell ! {Ant, move_me_to_you}.
-
-remove_ant_from(Cell, Ant) ->
-    Cell ! {Ant, remove_me_from_you}.
