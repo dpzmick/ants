@@ -40,6 +40,7 @@ wakeup_and_move(Ant) ->
     Ant ! wakeup_and_move.
 
 tell_neighbors(Ant, Neighbors) ->
+    io:format("ant: ~p neigh: ~p~n", [Ant, Neighbors]),
     Ant ! {neighbors, Neighbors}.
 
 you_moved(Ant, ToCell) ->
