@@ -31,7 +31,6 @@ loop(State = {Dict, _Occupant, Id}) ->
             priv_register_neighbor(State, Cell, Direction);
 
         {Ant, who_are_your_neighbors} ->
-            io:format("Ant: ~p, nei: ~p~n", [Ant, Dict]),
             ant:tell_neighbors(Ant, Dict),
             loop(State);
 
