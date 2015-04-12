@@ -39,13 +39,14 @@ loop(Ant) ->
     loop(Ant).
 
 app(Xmax, Ymax, NumAnts) ->
+    Reporter = reporter:start(),
     CellCoords = [{X,Y} || X <- lists:seq(1,Xmax), Y <- lists:seq(1,Ymax)],
     Cells = array:from_list([cell:start(Id) || Id <- CellCoords]),
     iter(Xmax, Ymax, Cells, 0, 0),
 
     lists:map(
       fun (X) ->
-              A = ant:start(X),
+              A = ant:start(X, Reporter),
               cell:move_ant_to(array:get(X, Cells), A),
               spawn(fun () -> loop(A) end)
       end,

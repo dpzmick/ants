@@ -1,5 +1,5 @@
 -module(cell).
--export([start/1, register_neighbor/3, tell_neighbors/2, move_ant_to/2]).
+-export([start/1, register_neighbor/3, tell_neighbors/2, move_ant_to/2, ant_leaving/2, cell_id/1]).
 
 priv_statify(Dict, Occupant, Id) -> {Dict, Occupant, Id}.
 
@@ -22,13 +22,11 @@ priv_move_ant_to(State = {Dict, Occupant, Id}, Ant) ->
 
 loop(State = {Dict, _Occupant, Id}) ->
     receive
-        {Cell, register_neighbor, Direction, FollowupDesired} ->
-            if
-                FollowupDesired ->
-                    Cell ! {self(), register_neighbor, opposite_direction(Direction), false};
-                true -> ok
-            end,
+        {Cell, register_neighbor, Direction, true} ->
+            Cell ! {self(), register_neighbor, opposite_direction(Direction), false},
             priv_register_neighbor(State, Cell, Direction);
+
+        {Cell, register_neighbor, Direction, false} -> priv_register_neighbor(State, Cell, Direction);
 
         {Ant, who_are_your_neighbors} ->
             ant:tell_neighbors(Ant, Dict),
@@ -36,7 +34,9 @@ loop(State = {Dict, _Occupant, Id}) ->
 
         {Ant, move_me_to_you} -> priv_move_ant_to(State, Ant);
 
-        {tell_id, ToWho} -> ToWho ! {told_id, Id}
+        {_Ant, ive_left} -> loop(priv_statify(Dict, undefined, Id));
+
+        {tell_id, ToWho} -> ToWho ! {told_id, Id}, loop(State)
     end.
 
 %% public api
@@ -51,6 +51,9 @@ tell_neighbors(Cell, ToWho) ->
 
 move_ant_to(Cell, Ant) ->
     Cell ! {Ant, move_me_to_you}.
+
+ant_leaving(Cell, Ant) ->
+    Cell ! {Ant, ive_left}.
 
 cell_id(Cell) ->
     Cell ! {tell_id, self()},
