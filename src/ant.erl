@@ -13,13 +13,20 @@ priv_got_neighbors(Neighbors) ->
 
 priv_statify(Id, CurrentCell, Reporter) -> {Id, CurrentCell, Reporter}.
 
+outer_loop(State = {Id,_,_}) ->
+    receive
+        stop -> io:format("Ant ~p stopping", [Id]), ok
+    after
+        0 -> loop(State)
+    end.
+
 loop(State = {Id, undefined, Reporter}) ->
     receive
         wakeup_and_move -> loop(State);
 
         {move_to, Cell} ->
-            reporter:report_move(Reporter, os:timestamp(), Id, cell:cell_id(Cell)),
-            loop(priv_statify(Id, Cell, Reporter));
+            reporter:report_move(Reporter, os:timestamp(), cell:cell_id(Cell)),
+            outer_loop(priv_statify(Id, Cell, Reporter));
 
         {tell_id, To} -> To ! {told_id, Id}, loop(State)
     end;
@@ -30,19 +37,19 @@ loop(State = {Id, CurrentCell, Reporter}) ->
 
         {neighbors, Neighbors} ->
             priv_got_neighbors(Neighbors),
-            loop(State);
+            outer_loop(State);
 
         {move_to, Cell} ->
-            reporter:report_move(Reporter, os:timestamp(), Id, cell:cell_id(Cell)),
+            reporter:report_move(Reporter, os:timestamp(), cell:cell_id(Cell)),
             cell:ant_leaving(CurrentCell, self()),
-            loop(priv_statify(Id, Cell, Reporter));
+            outer_loop(priv_statify(Id, Cell, Reporter));
 
-        {tell_id, To} -> To ! {told_id, Id}, loop(State)
+        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
     end.
 
 %% public api
 start(Id, Reporter) ->
-    spawn(fun () -> loop({Id, undefined, Reporter}) end).
+    spawn(fun () -> outer_loop({Id, undefined, Reporter}) end).
 
 wakeup_and_move(Ant) ->
     Ant ! wakeup_and_move.

@@ -38,23 +38,29 @@ loop(Ant) ->
     timer:sleep(5),
     loop(Ant).
 
-app(Xmax, Ymax, NumAnts) ->
-    Reporter = reporter:start(),
+start(Xmax, Ymax, NumAnts) ->
     CellCoords = [{X,Y} || X <- lists:seq(1,Xmax), Y <- lists:seq(1,Ymax)],
     Cells = array:from_list([cell:start(Id) || Id <- CellCoords]),
     iter(Xmax, Ymax, Cells, 0, 0),
 
-    lists:map(
+    Ants = lists:map(
       fun (X) ->
+              Reporter = reporter:start(io_lib:format("/tmp/ants~p", [X])),
+              io:format("Reporter: ~p~n", [Reporter]),
               A = ant:start(X, Reporter),
               cell:move_ant_to(array:get(X, Cells), A),
-              spawn(fun () -> loop(A) end)
+              {Reporter, A}
       end,
-      lists:seq(1,NumAnts)).
+      lists:seq(1,NumAnts)),
 
-start(Xmax, Ymax, NumAnts) ->
-    Pid = spawn(fun () -> app(Xmax, Ymax, NumAnts) end),
-    Pid.
+    Loopers = lists:map(fun ({_, Ant}) ->
+                                spawn(fun () -> loop(Ant) end)
+                        end,
+                        Ants),
 
-stop(Pid1) ->
-    exit(Pid1, kill).
+    {Cells, Ants, Loopers}.
+
+stop({Cells, Ants, Loopers}) ->
+    lists:map(fun ({R, A}) -> A ! stop, R ! stop end, Ants),
+    lists:map(fun (Looper) -> exit(Looper, kill) end, Loopers),
+    array:map(fun (_, Cell) -> Cell ! stop end, Cells).

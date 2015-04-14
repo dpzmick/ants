@@ -12,12 +12,19 @@ opposite_direction(Direction) ->
     end.
 
 priv_register_neighbor({Dict, Occupant, Id}, Cell, Direction) ->
-    loop(priv_statify(dict:store(Direction, Cell, Dict), Occupant, Id)).
+    outer_loop(priv_statify(dict:store(Direction, Cell, Dict), Occupant, Id)).
 
 priv_move_ant_to(State = {Dict, Occupant, Id}, Ant) ->
     case Occupant of
         undefined -> ant:you_moved(Ant, self()), loop(priv_statify(Dict, Ant, Id));
-        _ -> loop(State)
+        _ -> outer_loop(State)
+    end.
+
+outer_loop(State = {_,_,Id}) ->
+    receive
+        stop -> io:format("Cell ~p stopping~n", [Id]), ok
+    after
+        0 -> loop(State)
     end.
 
 loop(State = {Dict, _Occupant, Id}) ->
@@ -30,18 +37,18 @@ loop(State = {Dict, _Occupant, Id}) ->
 
         {Ant, who_are_your_neighbors} ->
             ant:tell_neighbors(Ant, Dict),
-            loop(State);
+            outer_loop(State);
 
         {Ant, move_me_to_you} -> priv_move_ant_to(State, Ant);
 
-        {_Ant, ive_left} -> loop(priv_statify(Dict, undefined, Id));
+        {_Ant, ive_left} -> outer_loop(priv_statify(Dict, undefined, Id));
 
-        {tell_id, ToWho} -> ToWho ! {told_id, Id}, loop(State)
+        {tell_id, ToWho} -> ToWho ! {told_id, Id}, outer_loop(State)
     end.
 
 %% public api
 start(Id) ->
-    spawn(fun () -> loop({dict:new(), undefined, Id}) end).
+    spawn(fun () -> outer_loop({dict:new(), undefined, Id}) end).
 
 register_neighbor(Cell, Neighbor, Direction) ->
     Cell ! {Neighbor, register_neighbor, Direction, true}.
