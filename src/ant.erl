@@ -20,27 +20,28 @@ outer_loop(State = {Id,_,_}) ->
         0 -> loop(State)
     end.
 
+% TODO this is v. repetitive
 loop(State = {Id, undefined, Reporter}) ->
     receive
-        wakeup_and_move -> loop(State);
+        wakeup_and_move -> outer_loop(State);
 
         {move_to, Cell} ->
-            reporter:report_move(Reporter, os:timestamp(), cell:cell_id(Cell)),
+            reporter:report_move(Reporter, os:timestamp(), Id, cell:cell_id(Cell)),
             outer_loop(priv_statify(Id, Cell, Reporter));
 
-        {tell_id, To} -> To ! {told_id, Id}, loop(State)
+        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
     end;
 
 loop(State = {Id, CurrentCell, Reporter}) ->
     receive
-        wakeup_and_move -> cell:tell_neighbors(CurrentCell, self()), loop(State);
+        wakeup_and_move -> cell:tell_neighbors(CurrentCell, self()), outer_loop(State);
 
         {neighbors, Neighbors} ->
             priv_got_neighbors(Neighbors),
             outer_loop(State);
 
         {move_to, Cell} ->
-            reporter:report_move(Reporter, os:timestamp(), cell:cell_id(Cell)),
+            reporter:report_move(Reporter, os:timestamp(), Id, cell:cell_id(Cell)),
             cell:ant_leaving(CurrentCell, self()),
             outer_loop(priv_statify(Id, Cell, Reporter));
 

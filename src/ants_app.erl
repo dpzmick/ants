@@ -35,7 +35,7 @@ iter(Xmax, Ymax, Cells, Xcurr, Ycurr) ->
 
 loop(Ant) ->
     ant:wakeup_and_move(Ant),
-    timer:sleep(5),
+    timer:sleep(10), % prevent starvation lol this is gross ugh
     loop(Ant).
 
 start(Xmax, Ymax, NumAnts) ->
