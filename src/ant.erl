@@ -50,7 +50,7 @@ loop(State = {Id, CurrentCell, Reporter}) ->
 
 %% public api
 start(Id, Reporter) ->
-    spawn(fun () -> outer_loop({Id, undefined, Reporter}) end).
+    spawn(fun () -> random:seed(), outer_loop({Id, undefined, Reporter}) end).
 
 wakeup_and_move(Ant) ->
     Ant ! wakeup_and_move.
