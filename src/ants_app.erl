@@ -35,7 +35,6 @@ iter(Xmax, Ymax, Cells, Xcurr, Ycurr) ->
 
 loop(Ant) ->
     ant:wakeup_and_move(Ant),
-    timer:sleep(10), % prevent starvation lol this is gross ugh
     loop(Ant).
 
 start(Xmax, Ymax, NumAnts) ->
@@ -45,7 +44,7 @@ start(Xmax, Ymax, NumAnts) ->
 
     Ants = lists:map(
       fun (X) ->
-              Reporter = reporter:start(io_lib:format("/tmp/ants~p", [X])),
+              Reporter = reporter:start(io_lib:format("/tmp/ants/ant~p", [X])),
               io:format("Reporter: ~p~n", [Reporter]),
               A = ant:start(X, Reporter),
               cell:move_ant_to(array:get(X, Cells), A),

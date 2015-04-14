@@ -13,6 +13,9 @@ class AntFrame:
         self.cell_pixels = cell_pixels
 
         self.data = np.zeros( (self.grid_x_size, self.grid_y_size, 3), dtype=np.uint8)
+        self.clear()
+
+    def clear(self):
         self.data.fill(255)
 
     def put_ant_at(self, x, y):
@@ -33,6 +36,9 @@ if __name__ == "__main__":
         print('Usage: python static_vis.py input_file')
         sys.exit(1)
 
+    quanta = 10**4 # microseconds
+    fps = 30
+
     inpt = open(sys.argv[1])
 
     reader = csv.reader(inpt, delimiter=',')
@@ -42,8 +48,10 @@ if __name__ == "__main__":
 
     ant_locs = {}
 
-    quanta = 10**6 # microseconds
     curr_data_start_time = 0
+
+    count = 0
+    vid_count = 0
 
     for row in reader:
         time = int(row[0])
@@ -61,10 +69,22 @@ if __name__ == "__main__":
 
             frames.append(frame.get_image())
 
+            count += 1
+
         # update the data
         ant_locs[ant_id] = (cell_x, cell_y)
 
-    clip = mpy.ImageSequenceClip(frames, fps=25)
-    clip.write_videofile("test.mp4", fps=25)
+        if count == 5000:
+            clip = mpy.ImageSequenceClip(frames, fps=fps)
+            clip.write_videofile(("test_%d.mp4" % vid_count), fps=fps)
+
+            frames = []
+
+            count = 0
+            vid_count += 1
+
+    # write any remaining frames
+    clip = mpy.ImageSequenceClip(frames, fps=fps)
+    clip.write_videofile(("test_%d.mp4" % vid_count), fps=fps)
 
     inpt.close()

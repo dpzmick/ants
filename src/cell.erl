@@ -17,15 +17,15 @@ priv_register_neighbor({Dict, Occupant, Id}, Cell, Direction) ->
 priv_move_ant_to(State = {Dict, Occupant, Id}, Ant) ->
     case Occupant of
         undefined -> ant:you_moved(Ant, self()), outer_loop(priv_statify(Dict, Ant, Id));
-        _ -> outer_loop(State)
+        _ -> ant:failed_move(Ant), outer_loop(State)
     end.
 
-outer_loop(State = {_,_,Id}) -> loop(State).
-    % receive
-    %     stop -> io:format("Cell ~p stopping~n", [Id]), ok
-    % after
-    %     0 -> loop(State)
-    % end.
+outer_loop(State = {_,_,Id}) ->
+    receive
+        stop -> io:format("Cell ~p stopping~n", [Id]), ok
+    after
+        0 -> loop(State)
+    end.
 
 loop(State = {Dict, _Occupant, Id}) ->
     receive
@@ -53,12 +53,14 @@ start(Id) ->
 register_neighbor(Cell, Neighbor, Direction) ->
     Cell ! {Neighbor, register_neighbor, Direction, true}.
 
+tell_neighbors(undefined, _) -> ok;
 tell_neighbors(Cell, ToWho) ->
     Cell ! {ToWho, who_are_your_neighbors}.
 
 move_ant_to(Cell, Ant) ->
     Cell ! {Ant, move_me_to_you}.
 
+ant_leaving(undefined, _) -> ok;
 ant_leaving(Cell, Ant) ->
     Cell ! {Ant, ive_left}.
 

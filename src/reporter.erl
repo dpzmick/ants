@@ -5,7 +5,7 @@
 starter(Filename) ->
     case file:open(Filename, [write, raw, {delayed_write, 4*1024*1024, 5000}]) of
         {ok, Fd} ->
-            file:write(Fd, "time_megasecs,time_secs,time_microsecs,ant_id,cell_x,cell_y"),
+            file:write(Fd, io_lib:format("time_megasecs,time_secs,time_microsecs,ant_id,cell_x,cell_y~n",[])),
             loop(Fd);
         {error, Reason} -> {error, Reason}
     end.
