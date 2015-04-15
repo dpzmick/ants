@@ -10,8 +10,10 @@ Requirements:
 
 Usage:
 -----
+```
 make
 ./run.sh GridXSize GridYSize NumAnts OutputDir TimeToRunSimulation (seconds)
+```
 
 After this you should end up with a new directory in OutputDir containing an
 ants.csv file and some video files.
