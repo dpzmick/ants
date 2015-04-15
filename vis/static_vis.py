@@ -92,6 +92,9 @@ if __name__ == "__main__":
             clip.write_videofile(clip_name, fps=fps)
             clips.append(clip_name)
 
+            # Make sure to remove references to the data we just loaded
+            # Run the GC to cleanup the frames we just created, now that they
+            # have been written to a video
             frames = []
             clip = None
             gc.collect()
