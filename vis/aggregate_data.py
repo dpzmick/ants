@@ -1,8 +1,8 @@
 # this script reads from a directory of ant data files and outputs a new file
 # containing the aggregated and sorted ant data
-import heapq
 import sys
 import csv
+import heapq
 
 def transform_data(ant_data):
     megasecs  = int(ant_data[0])
@@ -26,19 +26,22 @@ if __name__ == "__main__":
     output = sys.argv[1]
     inputs = sys.argv[2:]
 
-    heap = []
+    datas = []
 
     done = 0.0
     for inpt in inputs:
-        print('Loading ' + inpt + ' (' + str((done/len(inputs)) * 100) + '%)')
+        print('Loading ' + inpt + ' (' + str((done/(len(inputs)-1)) * 100) + '%)')
         f = open(inpt, 'r', 32768)
 
         c = csv.reader(f, delimiter=',')
         c.next() # skip fieldnames
 
+        file_data = []
         for row in c:
             dat = transform_data(row)
-            heapq.heappush(heap, dat)
+            file_data.append(dat)
+
+        datas.append(file_data)
 
         done += 1.0
         f.close()
@@ -48,9 +51,7 @@ if __name__ == "__main__":
     of.write("time,ant_id,cell_x,cell_y\n")
 
     start_time = None
-    while heap:
-        dat = heapq.heappop(heap)
-
+    for dat in heapq.merge(*datas):
         if start_time == None:
             start_time = dat[0]
 
