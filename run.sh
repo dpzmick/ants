@@ -5,6 +5,9 @@ if [ "$#" -ne 5 ]; then
     exit
 fi
 
+# exit it anything returns non zero
+set -e
+
 echo "Xmax: $1"
 echo "Ymax: $2"
 echo "NumAnts: $3"
@@ -16,6 +19,7 @@ TAG="$1x$2x$3_$4_$DATE"
 TMPDIR="/tmp/ants_$TAG"
 DATADIR=$5/$TAG
 INDIVIDUAL_DIR=$DATADIR/individual
+VID_TMP_DIR=$DATADIR/vid_tmp
 
 echo "TMPDIR: $TMPDIR"
 
@@ -31,7 +35,9 @@ rmdir $TMPDIR
 
 # run the processing scripts
 python vis/aggregate_data.py $DATADIR/ants.csv $INDIVIDUAL_DIR/*
-python vis/static_vis.py $DATADIR/ants.csv $DATADIR
+
+mkdir $VID_TMP_DIR
+python vis/static_vis.py $DATADIR/ants.csv $DATADIR $VID_TMP_DIR $1 $2
 
 touch $DATADIR/info
 echo "Xmax: $1" >> $DATADIR/info

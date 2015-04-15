@@ -2,6 +2,7 @@ import numpy as np
 import moviepy.editor as mpy
 import sys
 import csv
+import gc
 
 class AntFrame:
     def __init__(self, x_size, y_size, cell_pixels):
@@ -32,12 +33,21 @@ class AntFrame:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print('Usage: python static_vis.py input_file output_dir')
+    if len(sys.argv) != 6:
+        print('Usage: python static_vis.py input_file output_dir tmp_dir xmax ymax')
         sys.exit(1)
 
     dump_dir = sys.argv[2]
-    quanta = 10**4 # microseconds
+    tmp_dir = sys.argv[3]
+    xmax = int(sys.argv[4])
+    ymax = int(sys.argv[5])
+
+    memory_limit = 4*1024*1024*1024
+    frames_per_clip = memory_limit / (xmax * ymax * 3 * 8)
+
+    print 'Using %d frames per clip' % frames_per_clip
+
+    quanta = 10**5 # microseconds
     fps = 30
 
     inpt = open(sys.argv[1])
@@ -46,6 +56,7 @@ if __name__ == "__main__":
     reader.next() # skip header
 
     frames = []
+    clips = []
 
     ant_locs = {}
 
@@ -63,7 +74,7 @@ if __name__ == "__main__":
         if time - curr_data_start_time > quanta:
             curr_data_start_time = time
 
-            frame = AntFrame(100, 100, 4)
+            frame = AntFrame(xmax, ymax, 4)
 
             for aid, loc in ant_locs.iteritems():
                 frame.put_ant_at(loc[0], loc[1])
@@ -75,17 +86,28 @@ if __name__ == "__main__":
         # update the data
         ant_locs[ant_id] = (cell_x, cell_y)
 
-        if count == 5000:
+        if count == frames_per_clip:
             clip = mpy.ImageSequenceClip(frames, fps=fps)
-            clip.write_videofile(("test_%d.mp4" % vid_count), fps=fps)
+            clip_name = "%s/ants_%d.mp4" % (tmp_dir, vid_count)
+            clip.write_videofile(clip_name, fps=fps)
+            clips.append(clip_name)
 
             frames = []
+            clip = None
+            gc.collect()
 
             count = 0
             vid_count += 1
 
     # write any remaining frames
-    clip = mpy.ImageSequenceClip(frames, fps=fps)
-    clip.write_videofile(("%s/test_%d.mp4" % (dump_dir, vid_count)), fps=fps)
+    if len(frames) != 0:
+        clip = mpy.ImageSequenceClip(frames, fps=fps)
+        clip_name = "%s/ants_%d.mp4" % (tmp_dir, vid_count)
+        clip.write_videofile(clip_name, fps=fps)
+        clips.append(clip_name)
 
     inpt.close()
+
+    clips = map(lambda name: mpy.VideoFileClip(name), clips)
+    final_clip = mpy.concatenate_videoclips(clips)
+    final_clip.write_videofile(("%s/ants.mp4" % dump_dir), fps=fps)

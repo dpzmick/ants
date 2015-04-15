@@ -1,5 +1,5 @@
 #!/usr/bin/env escript
-%%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/
+%%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/ +P 134217727
 
 main([Xm, Ym, NumA, OutputDir, RT]) ->
     Xmax = list_to_integer(Xm),
