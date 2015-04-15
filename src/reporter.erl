@@ -1,5 +1,5 @@
 -module(reporter).
--export([start/1, report_move/4]).
+-export([start/1, report_move/4, stop/1]).
 
 % for some reason I have to open the file in the processes, can't open it then pass it in
 starter(Filename) ->
@@ -20,7 +20,9 @@ loop(Fd) ->
             file:write(Fd, [Out_string]),
             loop(Fd);
 
-        stop -> file:close(Fd)
+        {stop, ToWho} ->
+            file:close(Fd),
+            ToWho ! stopped
     end.
 
 %% public api
@@ -28,3 +30,9 @@ start(Filename) -> spawn(fun () -> starter(Filename) end).
 
 report_move(Reporter, Time, AntId, CellId) ->
     Reporter ! {move, [Time, AntId, CellId]}.
+
+stop(Reporter) ->
+    Reporter ! {stop, self()},
+    receive
+        stopped -> ok
+    end.

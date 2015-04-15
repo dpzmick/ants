@@ -1,5 +1,5 @@
 -module(ant).
--export([start/2, wakeup_and_move/1, tell_neighbors/2, you_moved/2, failed_move/1, ant_id/1]).
+-export([start/2, wakeup_and_move/1, tell_neighbors/2, you_moved/2, failed_move/1, ant_id/1, stop/1]).
 
 %% pick one of these randomly and try to move to it
 priv_pick_neighbor(Neighbors) ->
@@ -13,17 +13,19 @@ priv_got_neighbors(Neighbors) ->
 
 priv_statify(Id, CurrentCell, Reporter) -> {Id, CurrentCell, Reporter}.
 
-outer_loop(State = {Id,_,_}) ->
+outer_loop(State) ->
     receive
-        stop -> io:format("Ant ~p stopping", [Id]), ok;
-
-        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
+        {stop, ToTell} ->
+            ToTell ! stopped
     after
         0 -> loop(State)
     end.
 
 inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) ->
     receive
+        {stop, ToTell} ->
+            ToTell ! stopped;
+
         {neighbors, Neighbors} ->
             priv_got_neighbors(Neighbors),
             inner_loop(Waiter, State);
@@ -36,7 +38,9 @@ inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) ->
 
         move_failed ->
             Waiter ! done,
-            outer_loop(State)
+            outer_loop(State);
+
+        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
     end.
 
 loop(State = {_, CurrentCell, _}) ->
@@ -70,4 +74,10 @@ ant_id(Ant) ->
     Ant ! {tell_id, self()},
     receive
         {told_id, Id} -> Id
+    end.
+
+stop(Ant) ->
+    Ant ! {stop, self()},
+    receive
+        stopped -> ok
     end.

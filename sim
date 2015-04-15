@@ -1,0 +1,17 @@
+#!/usr/bin/env escript
+%%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/
+
+main([Xm, Ym, NumA, OutputDir, RT]) ->
+    Xmax = list_to_integer(Xm),
+    Ymax = list_to_integer(Ym),
+    NumAnts = list_to_integer(NumA),
+    A = ants_app:start(Xmax, Ymax, NumAnts, OutputDir),
+    Runtime = list_to_integer(RT),
+    timer:sleep(Runtime * 1000),
+    ants_app:stop(A),
+    timer:sleep(100);
+
+main(_) -> usage().
+
+usage() ->
+    io:format("usage: sim Xmax Ymax NumAnts OutputDir Runtime (seconds)").

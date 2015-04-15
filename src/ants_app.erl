@@ -60,6 +60,6 @@ start(Xmax, Ymax, NumAnts, OutputDir) ->
     {Cells, Ants, Loopers}.
 
 stop({Cells, Ants, Loopers}) ->
-    lists:map(fun ({R, A}) -> A ! stop, R ! stop end, Ants),
+    lists:map(fun ({R, A}) -> ant:stop(A), reporter:stop(R) end, Ants),
     lists:map(fun (Looper) -> exit(Looper, kill) end, Loopers),
-    array:map(fun (_, Cell) -> Cell ! stop end, Cells).
+    array:map(fun (_, Cell) -> cell:stop(Cell) end, Cells).

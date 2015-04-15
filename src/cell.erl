@@ -1,5 +1,5 @@
 -module(cell).
--export([start/1, register_neighbor/3, tell_neighbors/2, move_ant_to/2, ant_leaving/2, cell_id/1]).
+-export([start/1, register_neighbor/3, tell_neighbors/2, move_ant_to/2, ant_leaving/2, cell_id/1, stop/1]).
 
 priv_statify(Dict, Occupant, Id) -> {Dict, Occupant, Id}.
 
@@ -20,15 +20,19 @@ priv_move_ant_to(State = {Dict, Occupant, Id}, Ant) ->
         _ -> ant:failed_move(Ant), outer_loop(State)
     end.
 
-outer_loop(State = {_,_,Id}) ->
+outer_loop(State) ->
     receive
-        stop -> io:format("Cell ~p stopping~n", [Id]), ok
+        {stop, ToWho} ->
+            ToWho ! stopped
     after
         0 -> loop(State)
     end.
 
 loop(State = {Dict, _Occupant, Id}) ->
     receive
+        {stop, ToWho} ->
+            ToWho ! stopped;
+
         {Cell, register_neighbor, Direction, true} ->
             Cell ! {self(), register_neighbor, opposite_direction(Direction), false},
             priv_register_neighbor(State, Cell, Direction);
@@ -68,4 +72,10 @@ cell_id(Cell) ->
     Cell ! {tell_id, self()},
     receive
         {told_id, Id} -> Id
+    end.
+
+stop(Cell) ->
+    Cell ! {stop, self()},
+    receive
+        stopped -> ok
     end.
