@@ -52,7 +52,11 @@ loop(State = {_, CurrentCell, _}) ->
 
 %% public api
 start(Id, Reporter) ->
-    spawn(fun () -> random:seed(0, 0, Id), outer_loop({Id, undefined, Reporter}) end).
+    spawn(fun () ->
+                  {A,B,C} = erlang:now(),
+                  random:seed(A, B, C + Id),
+                  outer_loop({Id, undefined, Reporter})
+          end).
 
 %% blocks
 wakeup_and_move(Ant) ->

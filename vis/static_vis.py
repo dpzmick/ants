@@ -32,10 +32,11 @@ class AntFrame:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print('Usage: python static_vis.py input_file')
+    if len(sys.argv) != 3:
+        print('Usage: python static_vis.py input_file output_dir')
         sys.exit(1)
 
+    dump_dir = sys.argv[2]
     quanta = 10**4 # microseconds
     fps = 30
 
@@ -85,6 +86,6 @@ if __name__ == "__main__":
 
     # write any remaining frames
     clip = mpy.ImageSequenceClip(frames, fps=fps)
-    clip.write_videofile(("test_%d.mp4" % vid_count), fps=fps)
+    clip.write_videofile(("%s/test_%d.mp4" % (dump_dir, vid_count)), fps=fps)
 
     inpt.close()

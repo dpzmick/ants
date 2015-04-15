@@ -45,7 +45,6 @@ start(Xmax, Ymax, NumAnts, OutputDir) ->
     Ants = lists:map(
       fun (X) ->
               Reporter = reporter:start(io_lib:format("~s/ant~p", [OutputDir, X])),
-              io:format("Reporter: ~p~n", [Reporter]),
               A = ant:start(X, Reporter),
               cell:move_ant_to(array:get(X, Cells), A),
               {Reporter, A}
