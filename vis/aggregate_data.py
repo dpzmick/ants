@@ -30,7 +30,8 @@ if __name__ == "__main__":
 
     done = 0.0
     for inpt in inputs:
-        print('Loading ' + inpt + ' (' + str((done/(len(inputs)-1)) * 100) + '%)')
+        print '\r                              ',
+        print '\r' + str((done/(len(inputs)-1)) * 100) + '%',
         f = open(inpt, 'r', 32768)
 
         c = csv.reader(f, delimiter=',')
