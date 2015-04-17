@@ -31,6 +31,7 @@ start(Filename) -> spawn(fun () -> starter(Filename) end).
 report_move(Reporter, Time, AntId, CellId) ->
     Reporter ! {move, [Time, AntId, CellId]}.
 
+stop(undefined) -> ok;
 stop(Reporter) ->
     Reporter ! {stop, self()},
     receive

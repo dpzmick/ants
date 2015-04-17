@@ -47,7 +47,10 @@ loop(State = {_, CurrentCell, _}) ->
     receive
         {wakeup_and_move, Waiter} ->
             cell:tell_neighbors(CurrentCell, self()),
-            inner_loop(Waiter, State)
+            inner_loop(Waiter, State);
+
+        {stop, ToTell} ->
+            ToTell ! stopped
     end.
 
 %% public api
@@ -80,6 +83,7 @@ ant_id(Ant) ->
         {told_id, Id} -> Id
     end.
 
+stop(undefined) -> ok;
 stop(Ant) ->
     Ant ! {stop, self()},
     receive

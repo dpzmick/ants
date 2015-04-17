@@ -74,6 +74,7 @@ cell_id(Cell) ->
         {told_id, Id} -> Id
     end.
 
+stop(undefined) -> ok;
 stop(Cell) ->
     Cell ! {stop, self()},
     receive

@@ -57,6 +57,33 @@ ant_move_success_test_() ->
              cell:move_ant_to(C1, self()),
              receive
                  {move_to, ToCell} -> ?assert(C1 == ToCell)
-             end
+             end,
+             cell:stop(C1)
+     end
+    }.
+
+ant_move_fail_test_() ->
+    {
+     "ant move failure",
+     fun () ->
+             C1 = cell:start(c1),
+             A = ant:start(1, undefined),
+             cell:move_ant_to(C1, A),
+             cell:move_ant_to(C1, self()),
+             receive
+                 move_failed -> ?assert(0 == 0)
+             end,
+             cell:stop(C1),
+             ant:stop(A)
+     end
+    }.
+
+cell_get_id_test_() ->
+    {
+     "test getting cell's id",
+     fun () ->
+             C1 = cell:start(c1),
+             ID = cell:cell_id(C1),
+             ?assert(ID == c1)
      end
     }.
