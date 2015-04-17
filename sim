@@ -14,4 +14,4 @@ main([Xm, Ym, NumA, OutputDir, RT]) ->
 main(_) -> usage().
 
 usage() ->
-    io:format("usage: sim Xmax Ymax NumAnts OutputDir Runtime (seconds)").
+    io:format("usage: sim Xmax Ymax NumAnts OutputDir Runtime (seconds)~n").
