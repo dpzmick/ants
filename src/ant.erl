@@ -13,10 +13,12 @@ priv_got_neighbors(Neighbors) ->
 
 priv_statify(Id, CurrentCell, Reporter) -> {Id, CurrentCell, Reporter}.
 
-outer_loop(State) ->
+outer_loop(State = {Id, _, _}) ->
     receive
         {stop, ToTell} ->
-            ToTell ! stopped
+            ToTell ! stopped;
+
+        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
     after
         0 -> loop(State)
     end.
@@ -43,14 +45,16 @@ inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) ->
         {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
     end.
 
-loop(State = {_, CurrentCell, _}) ->
+loop(State = {Id, CurrentCell, _}) ->
     receive
         {wakeup_and_move, Waiter} ->
             cell:tell_neighbors(CurrentCell, self()),
             inner_loop(Waiter, State);
 
         {stop, ToTell} ->
-            ToTell ! stopped
+            ToTell ! stopped;
+
+        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
     end.
 
 %% public api
