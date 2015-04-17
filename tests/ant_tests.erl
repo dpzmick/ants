@@ -7,6 +7,7 @@ tell_id_test_() ->
      fun () ->
              A = ant:start(1, undefined),
              ID = ant:ant_id(A),
-             ?assert(ID == 1)
+             ?assert(ID == 1),
+             ant:stop(A)
      end
     }.
