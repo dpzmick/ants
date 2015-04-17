@@ -19,7 +19,9 @@ left_right_test_() ->
                  {neighbors, Neighbors1} ->
                      {_, Ret1} = dict:find(w, Neighbors1),
                      ?assert(Ret1 == C1)
-             end
+             end,
+             cell:stop(C1),
+             cell:stop(C2)
      end
     }.
 
@@ -41,7 +43,20 @@ up_down_test_() ->
                  {neighbors, Neighbors1} ->
                      {_, Ret1} = dict:find(n, Neighbors1),
                      ?assert(Ret1 == C1)
-             end
+             end,
+             cell:stop(C1),
+             cell:stop(C2)
      end
     }.
 
+ant_move_success_test_() ->
+    {
+     "ant move is successful",
+     fun () ->
+             C1 = cell:start(c1),
+             cell:move_ant_to(C1, self()),
+             receive
+                 {move_to, ToCell} -> ?assert(C1 == ToCell)
+             end
+     end
+    }.
