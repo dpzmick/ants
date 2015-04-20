@@ -4,8 +4,11 @@
 %% pick one of these randomly and try to move to it
 priv_pick_neighbor(Neighbors) ->
     Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
-    Index = random:uniform(length(Cells)),
-    lists:nth(Index, Cells).
+    WeightedList = lists:foldl(
+                     fun(C, Acc) -> [C || _ <- lists:seq(1, cell:cell_weight(C))] ++ Acc end,
+                     [], Cells),
+    Index = random:uniform(length(WeightedList)),
+    lists:nth(Index, WeightedList).
 
 priv_got_neighbors(Neighbors) ->
     Choice = priv_pick_neighbor(Neighbors),
