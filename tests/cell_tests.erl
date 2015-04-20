@@ -87,3 +87,13 @@ cell_get_id_test_() ->
              ?assert(ID == c1)
      end
     }.
+
+cell_get_weight_test_() ->
+    {
+     "test getting the weight of a cell",
+     fun () ->
+             C = cell:start(c1, 10),
+             W = cell:cell_weight(C),
+             ?assert(W == 10)
+     end
+    }.

@@ -9,3 +9,6 @@ bigrun: all
 
 clean:
 	rm ebin/*
+
+test: all
+	./test

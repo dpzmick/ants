@@ -1,7 +1,8 @@
 -module(cell).
--export([start/1, register_neighbor/3, tell_neighbors/2, move_ant_to/2, ant_leaving/2, cell_id/1, stop/1]).
+-export([start/1, start/2, register_neighbor/3, tell_neighbors/2, move_ant_to/2,
+         ant_leaving/2, cell_id/1, cell_weight/1, stop/1]).
 
-priv_statify(Dict, Occupant, Id) -> {Dict, Occupant, Id}.
+priv_statify(Dict, Occupant, Weight, Id) -> {Dict, Occupant, Weight, Id}.
 
 opposite_direction(Direction) ->
     case Direction of
@@ -11,12 +12,12 @@ opposite_direction(Direction) ->
         w -> e
     end.
 
-priv_register_neighbor({Dict, Occupant, Id}, Cell, Direction) ->
-    outer_loop(priv_statify(dict:store(Direction, Cell, Dict), Occupant, Id)).
+priv_register_neighbor({Dict, Occupant, Weight, Id}, Cell, Direction) ->
+    outer_loop(priv_statify(dict:store(Direction, Cell, Dict), Occupant, Weight, Id)).
 
-priv_move_ant_to(State = {Dict, Occupant, Id}, Ant) ->
+priv_move_ant_to(State = {Dict, Occupant, Weight, Id}, Ant) ->
     case Occupant of
-        undefined -> ant:you_moved(Ant, self()), outer_loop(priv_statify(Dict, Ant, Id));
+        undefined -> ant:you_moved(Ant, self()), outer_loop(priv_statify(Dict, Ant, Weight, Id));
         _ -> ant:failed_move(Ant), outer_loop(State)
     end.
 
@@ -28,7 +29,7 @@ outer_loop(State) ->
         0 -> loop(State)
     end.
 
-loop(State = {Dict, _Occupant, Id}) ->
+loop(State = {Dict, _Occupant, Weight, Id}) ->
     receive
         {stop, ToWho} ->
             ToWho ! stopped;
@@ -45,14 +46,18 @@ loop(State = {Dict, _Occupant, Id}) ->
 
         {Ant, move_me_to_you} -> priv_move_ant_to(State, Ant);
 
-        {_Ant, ive_left} -> outer_loop(priv_statify(Dict, undefined, Id));
+        {_Ant, ive_left} -> outer_loop(priv_statify(Dict, undefined, Weight, Id));
 
-        {tell_id, ToWho} -> ToWho ! {told_id, Id}, outer_loop(State)
+        {tell_id, ToWho} -> ToWho ! {told_id, Id}, outer_loop(State);
+
+        {tell_weight, ToWho} -> ToWho ! {told_weight, Weight}, outer_loop(State)
     end.
 
 %% public api
-start(Id) ->
-    spawn(fun () -> outer_loop({dict:new(), undefined, Id}) end).
+start(Id) -> start(Id, 1).
+
+start(Id, Weight) ->
+    spawn(fun () -> outer_loop({dict:new(), undefined, Weight, Id}) end).
 
 register_neighbor(Cell, Neighbor, Direction) ->
     Cell ! {Neighbor, register_neighbor, Direction, true}.
@@ -72,6 +77,12 @@ cell_id(Cell) ->
     Cell ! {tell_id, self()},
     receive
         {told_id, Id} -> Id
+    end.
+
+cell_weight(Cell) ->
+    Cell ! {tell_weight, self()},
+    receive
+        {told_weight, Weight} -> Weight
     end.
 
 stop(undefined) -> ok;
