@@ -103,6 +103,9 @@ if __name__ == "__main__":
             clip = None
             gc.collect()
 
+            # TODO no reason to free then reallocate all the frames, just clear
+            # them
+
             count = 0
             vid_count += 1
 
