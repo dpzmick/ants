@@ -56,37 +56,37 @@ loop(State = {Dict, _Occupant, Weight, Id}) ->
 %% public api
 start(Id) -> start(Id, 1).
 
-start(Id, Weight) ->
+start(Id, Weight) when is_number(Weight) ->
     spawn(fun () -> outer_loop({dict:new(), undefined, Weight, Id}) end).
 
-register_neighbor(Cell, Neighbor, Direction) ->
+register_neighbor(Cell, Neighbor, Direction) when is_pid(Cell), is_pid(Neighbor) ->
     Cell ! {Neighbor, register_neighbor, Direction, true}.
 
 tell_neighbors(undefined, _) -> ok;
-tell_neighbors(Cell, ToWho) ->
+tell_neighbors(Cell, ToWho) when is_pid(Cell), is_pid(ToWho) ->
     Cell ! {ToWho, who_are_your_neighbors}.
 
-move_ant_to(Cell, Ant) ->
+move_ant_to(Cell, Ant) when is_pid(Cell), is_pid(Ant) ->
     Cell ! {Ant, move_me_to_you}.
 
 ant_leaving(undefined, _) -> ok;
-ant_leaving(Cell, Ant) ->
+ant_leaving(Cell, Ant) when is_pid(Cell), is_pid(Ant) ->
     Cell ! {Ant, ive_left}.
 
-cell_id(Cell) ->
+cell_id(Cell) when is_pid(Cell) ->
     Cell ! {tell_id, self()},
     receive
         {told_id, Id} -> Id
     end.
 
-cell_weight(Cell) ->
+cell_weight(Cell) when is_pid(Cell) ->
     Cell ! {tell_weight, self()},
     receive
         {told_weight, Weight} -> Weight
     end.
 
 stop(undefined) -> ok;
-stop(Cell) ->
+stop(Cell) when is_pid(Cell) ->
     Cell ! {stop, self()},
     receive
         stopped -> ok

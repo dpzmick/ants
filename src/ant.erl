@@ -16,7 +16,7 @@ priv_got_neighbors(Neighbors) ->
 
 priv_statify(Id, CurrentCell, Reporter) -> {Id, CurrentCell, Reporter}.
 
-outer_loop(State = {Id, _, _}) ->
+outer_loop(State = {Id, _, _}) when is_number(Id) ->
     receive
         {stop, ToTell} ->
             ToTell ! stopped;
@@ -26,7 +26,7 @@ outer_loop(State = {Id, _, _}) ->
         0 -> loop(State)
     end.
 
-inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) ->
+inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) when is_pid(Waiter), is_number(Id) ->
     receive
         {stop, ToTell} ->
             ToTell ! stopped;
@@ -48,7 +48,7 @@ inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) ->
         {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
     end.
 
-loop(State = {Id, CurrentCell, _}) ->
+loop(State = {Id, CurrentCell, _}) when is_number(Id) ->
     receive
         {wakeup_and_move, Waiter} ->
             cell:tell_neighbors(CurrentCell, self()),
@@ -61,7 +61,7 @@ loop(State = {Id, CurrentCell, _}) ->
     end.
 
 %% public api
-start(Id, Reporter) ->
+start(Id, Reporter) when is_number(Id) ->
     spawn(fun () ->
                   {A,B,C} = erlang:now(),
                   random:seed(A, B, C + Id),
@@ -69,29 +69,30 @@ start(Id, Reporter) ->
           end).
 
 %% blocks
-wakeup_and_move(Ant) ->
+wakeup_and_move(Ant) when is_pid(Ant) ->
     Ant ! {wakeup_and_move, self()},
     receive
         done -> ok
     end.
 
-tell_neighbors(Ant, Neighbors) ->
+%% idk how to check if is_dict
+tell_neighbors(Ant, Neighbors) when is_pid(Ant) ->
     Ant ! {neighbors, Neighbors}.
 
-you_moved(Ant, ToCell) ->
+you_moved(Ant, ToCell) when is_pid(Ant), is_pid(ToCell) ->
     Ant ! {move_to, ToCell}.
 
-failed_move(Ant) ->
+failed_move(Ant) when is_pid(Ant) ->
     Ant ! move_failed.
 
-ant_id(Ant) ->
+ant_id(Ant) when is_pid(Ant) ->
     Ant ! {tell_id, self()},
     receive
         {told_id, Id} -> Id
     end.
 
 stop(undefined) -> ok;
-stop(Ant) ->
+stop(Ant) when is_pid(Ant) ->
     Ant ! {stop, self()},
     receive
         stopped -> ok
