@@ -43,6 +43,7 @@ reader_helper(Fd) ->
     file:read_line(Fd),
     file:read_line(Fd),
     BoundCells = iter_cell_config(Fd),
+    file:close(Fd),
     {Xmax, Ymax, NumAnts, Runtime, DefaultWeight, BoundCells}.
 
 from_file(Filename) ->

@@ -1,17 +1,29 @@
 #!/usr/bin/env escript
 %%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/ +P 134217727
 
-main([Xm, Ym, NumA, OutputDir, RT]) ->
-    Xmax = list_to_integer(Xm),
-    Ymax = list_to_integer(Ym),
-    NumAnts = list_to_integer(NumA),
-    A = ants_app:start(Xmax, Ymax, NumAnts, OutputDir),
-    Runtime = list_to_integer(RT),
+main([ConfFileName, OutputDir]) ->
+    %% still need to extract all of this in the ants_app
+    %% because need to set cell initial states easily
+
+    Conf = sim_config:from_file(ConfFileName),
+    Xmax = sim_config:xmax(Conf),
+    Ymax = sim_config:ymax(Conf),
+    NumAnts = sim_config:numants(Conf),
+    Runtime = sim_config:runtime(Conf),
+
+    io:format("Starting simulation ~p~n", [os:timestamp()]),
+    io:format("Xmax: ~p~n", [Xmax]),
+    io:format("Ymax: ~p~n", [Ymax]),
+    io:format("NumAnts: ~p~n", [NumAnts]),
+    io:format("Runtime: ~p~n", [Runtime]),
+
+    A = ants_app:start(ConfFileName, OutputDir),
+
     timer:sleep(Runtime * 1000),
     ants_app:stop(A),
-    timer:sleep(100);
+    io:format("Simulation done ~p~n", [os:timestamp()]);
 
 main(_) -> usage().
 
 usage() ->
-    io:format("usage: sim Xmax Ymax NumAnts OutputDir Runtime (seconds)~n").
+    io:format("usage: sim ConfFileName OutputDir~n").
