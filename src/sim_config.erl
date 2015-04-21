@@ -3,23 +3,38 @@
 
 %% you'd better hope the file is formatted correctly
 
-line_helper(Line, Expected) ->
+line_helper(Line, Expected, int) ->
     case string:tokens(string:strip(Line, both, $\n), ": ") of
         [Expected, Value] ->
             {V, _} = string:to_integer(Value), V;
         _ -> {error, malformed}
+    end;
+
+line_helper(Line, Expected, float) ->
+    case string:tokens(string:strip(Line, both, $\n), ": ") of
+        [Expected, Value] ->
+            {V, _} = string:to_float(Value), V;
+        _ -> {error, malformed}
     end.
 
-readline_helper(Fd, Expected) ->
+readline_helper(Fd, Expected, int) ->
     case file:read_line(Fd) of
-        {ok, Line} -> line_helper(Line, Expected);
+        {ok, Line} -> line_helper(Line, Expected, int);
+        eof -> {error, malformed};
+        {error, Reason} -> {error, Reason}
+    end;
+
+readline_helper(Fd, Expected, float) ->
+    case file:read_line(Fd) of
+        {ok, Line} -> line_helper(Line, Expected, float);
         eof -> {error, malformed};
         {error, Reason} -> {error, Reason}
     end.
 
 handle_cell_line(Line) ->
-    lists:map(fun(E) -> {V,_} = string:to_integer(E), V end,
-              string:tokens(string:strip(Line, both, $\n), ",")).
+    [X,Y,Weight] = string:tokens(string:strip(Line, both, $\n), ","),
+    [{Ox, _}, {Oy, _}, {Ow, _}] = [string:to_integer(X), string:to_integer(Y), string:to_float(Weight)],
+    [Ox, Oy, Ow].
 
 iter_cell_config(Fd) -> iter_cell_config(Fd, dict:new()).
 
@@ -34,11 +49,11 @@ iter_cell_config(Fd, Dict) ->
 
 %% read the config file
 reader_helper(Fd) ->
-    Xmax          = readline_helper(Fd, "Xmax"),
-    Ymax          = readline_helper(Fd, "Ymax"),
-    NumAnts       = readline_helper(Fd, "NumAnts"),
-    Runtime       = readline_helper(Fd, "Runtime"),
-    DefaultWeight = readline_helper(Fd, "DefaultWeight"),
+    Xmax          = readline_helper(Fd, "Xmax", int),
+    Ymax          = readline_helper(Fd, "Ymax", int),
+    NumAnts       = readline_helper(Fd, "NumAnts", int),
+    Runtime       = readline_helper(Fd, "Runtime", int),
+    DefaultWeight = readline_helper(Fd, "DefaultWeight", float),
     %% read the empty line and the header
     file:read_line(Fd),
     file:read_line(Fd),

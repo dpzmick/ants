@@ -18,8 +18,8 @@ read_a_test_() ->
              lists:map(
                fun ({X,Y}) ->
                        if
-                           X == Y -> ?assert(sim_config:cell_weight(Conf,X,Y) == 10.0);
-                           true -> ?assert(sim_config:cell_weight(Conf,X,Y) == 1.0)
+                           X == Y -> ?assertEqual(sim_config:cell_weight(Conf,X,Y), 10.0);
+                           true -> ?assertEqual(sim_config:cell_weight(Conf,X,Y), 1.0)
                        end
                end,
                Coords)
