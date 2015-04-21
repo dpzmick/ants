@@ -1,35 +1,50 @@
 -module(reporter).
--export([start/1, report_move/4, stop/1]).
+-export([start/1, report_move/4, report_cell_change/4, stop/1]).
 
 % for some reason I have to open the file in the processes, can't open it then pass it in
-starter(Filename) ->
-    case file:open(Filename, [write, raw, {delayed_write, 4*1024*1024, 5000}]) of
-        {ok, Fd} ->
-            file:write(Fd, io_lib:format("time_megasecs,time_secs,time_microsecs,ant_id,cell_x,cell_y~n",[])),
-            loop(Fd);
+starter(Filename_ant, Filename_cell) ->
+    A = file:open(Filename_ant, [write, raw, {delayed_write, 4*1024*1024, 5000}]),
+    B = file:open(Filename_cell, [write, raw, {delayed_write, 4*1024*1024, 5000}]),
+    case {A,B} of
+        {{ok, Fd_ant}, {ok, Fd_cell}} ->
+            file:write(Fd_ant, io_lib:format("time_megasecs,time_secs,time_microsecs,ant_id,cell_x,cell_y~n",[])),
+            file:write(Fd_cell, io_lib:format("time_megasecs,time_secs,time_microsecs,cell_x,cell_y,new_weight~n",[])),
+            loop(Fd_ant, Fd_cell);
         {error, Reason} -> {error, Reason}
     end.
 
-loop(Fd) ->
+loop(Fd_ant, Fd_cell) ->
     receive
         {move, [Time, AntId, CellId]} ->
             {MegaSecs, Secs, MicroSecs} = Time,
             {CellX, CellY} = CellId,
             Out_string = io_lib:format("~p,~p,~p,~p,~p,~p~n",
                                        [MegaSecs, Secs, MicroSecs, AntId, CellX, CellY]),
-            file:write(Fd, [Out_string]),
-            loop(Fd);
+            file:write(Fd_ant, [Out_string]),
+            loop(Fd_ant, Fd_cell);
+
+        {weight_change, [Time, CellId, NewWeight]} ->
+            {MegaSecs, Secs, MicroSecs} = Time,
+            {CellX, CellY} = CellId,
+            Out_string = io_lib:format("~p,~p,~p,~p,~p,~p~n",
+                                       [MegaSecs, Secs, MicroSecs, CellX, CellY, NewWeight]),
+            file:write(Fd_cell, [Out_string]),
+            loop(Fd_ant, Fd_cell);
 
         {stop, ToWho} ->
-            file:close(Fd),
+            file:close(Fd_ant),
+            file:close(Fd_cell),
             ToWho ! stopped
     end.
 
 %% public api
-start(Filename) -> spawn(fun () -> starter(Filename) end).
+start(Filename) -> spawn(fun () -> starter(Filename, "/dev/null") end).
 
 report_move(Reporter, Time, AntId, CellId) ->
     Reporter ! {move, [Time, AntId, CellId]}.
+
+report_cell_change(Reporter, Time, CellId, NewWeight) ->
+    Reporter ! {weight_change, [Time, CellId, NewWeight]}.
 
 stop(undefined) -> ok;
 stop(Reporter) ->
