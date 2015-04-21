@@ -1,7 +1,7 @@
 -module(ant).
 -export([start/2, wakeup_and_move/1, tell_neighbors/2, you_moved/2, failed_move/1, ant_id/1, stop/1]).
 
-%% pick one of these randomly and try to move to it
+%% pick one of these randomly (using their weight) and try to move to it
 priv_pick_neighbor(Neighbors) ->
     Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
     WeightedList = lists:foldl(
