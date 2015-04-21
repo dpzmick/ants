@@ -19,7 +19,7 @@ read_a_test_() ->
                fun ({X,Y}) ->
                        if
                            X == Y -> ?assert(sim_config:cell_weight(Conf,X,Y) == 10);
-                           true -> ?assert(sim_config:cell_weight(Conf, X, Y) == 1)
+                           true -> ?assert(sim_config:cell_weight(Conf,X,Y) == 1)
                        end
                end,
                Coords)
