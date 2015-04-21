@@ -4,11 +4,14 @@
 %% pick one of these randomly (using their weight) and try to move to it
 priv_pick_neighbor(Neighbors) ->
     Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
-    WeightedList = lists:foldl(
-                     fun(C, Acc) -> [C || _ <- lists:seq(1, cell:cell_weight(C))] ++ Acc end,
-                     [], Cells),
-    Index = random:uniform(length(WeightedList)),
-    lists:nth(Index, WeightedList).
+    Weights = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
+    Sum = lists:sum(Weights),
+    Probabilities = lists:map(fun(W) -> W / Sum end, Weights),
+    HackyWeightedList = lists:foldl(
+                          fun({P,C}, Acc) -> [C || _ <- lists:seq(1, round(P*100))] ++ Acc end,
+                          [], lists:zip(Probabilities, Cells)),
+    Index = random:uniform(length(HackyWeightedList)),
+    lists:nth(Index, HackyWeightedList).
 
 priv_got_neighbors(Neighbors) ->
     Choice = priv_pick_neighbor(Neighbors),
