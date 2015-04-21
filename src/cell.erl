@@ -53,7 +53,6 @@ loop(State = {Dict, Occupant, Weight, Id}) ->
         {tell_weight, ToWho} -> ToWho ! {told_weight, Weight}, outer_loop(State);
 
         {update_weight, NewWeight} when is_number(NewWeight) ->
-            io:format("[~p] OldWeight: ~p NewWeight: ~p~n", [Id, Weight, NewWeight]),
             outer_loop({Dict, Occupant, NewWeight, Id})
     end.
 
