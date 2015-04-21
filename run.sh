@@ -18,7 +18,8 @@ echo Type: $TYPE
 echo Datadir: $2
 
 DATE=$(date +%s)
-TAG="$TYPE_$DATE"
+TAG=$TYPE"_"$DATE
+echo TAG: $TAG
 TMPDIR="/tmp/ants_$TAG"
 DATADIR=$2/$TAG
 INDIVIDUAL_DIR=$DATADIR/individual
@@ -29,21 +30,17 @@ echo "TMPDIR: $TMPDIR"
 mkdir $TMPDIR
 ./sim $1 $TMPDIR
 
-# mkdir $DATADIR
-# mkdir $INDIVIDUAL_DIR
+mkdir $DATADIR
+mkdir $INDIVIDUAL_DIR
 
-# mv $TMPDIR/* $INDIVIDUAL_DIR
+mv $TMPDIR/* $INDIVIDUAL_DIR
 
-# rmdir $TMPDIR
+rmdir $TMPDIR
 
-# # run the processing scripts
-# python vis/aggregate_data.py $DATADIR/ants.csv $INDIVIDUAL_DIR/*
+# run the processing scripts
+python vis/aggregate_data.py $DATADIR/ants.csv $INDIVIDUAL_DIR/*
 
-# mkdir $VID_TMP_DIR
-# python vis/static_vis.py $DATADIR/ants.csv $DATADIR $VID_TMP_DIR $1 $2
+mkdir $VID_TMP_DIR
+python vis/static_vis.py $DATADIR/ants.csv $DATADIR $VID_TMP_DIR $1
 
-# touch $DATADIR/info
-# echo "Xmax: $1" >> $DATADIR/info
-# echo "Ymax: $2" >> $DATADIR/info
-# echo "NumAnts: $3" >> $DATADIR/info
-# echo "Runtime: $4" >> $DATADIR/info
+cp $1 $DATADIR/.

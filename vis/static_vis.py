@@ -33,14 +33,18 @@ class AntFrame:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
-        print('Usage: python static_vis.py input_file output_dir tmp_dir xmax ymax')
+    if len(sys.argv) != 5:
+        print('Usage: python static_vis.py input_file output_dir tmp_dir conf_file')
         sys.exit(1)
 
     dump_dir = sys.argv[2]
     tmp_dir = sys.argv[3]
-    xmax = int(sys.argv[4])
-    ymax = int(sys.argv[5])
+    conf_file = sys.argv[4]
+
+    f = open(conf_file, 'r')
+    xmax = int(f.readline().strip().split(": ")[1])
+    ymax = int(f.readline().strip().split(": ")[1])
+    f.close()
 
     memory_limit = 4*1024*1024*1024
     frames_per_clip = memory_limit / (xmax * ymax * 3 * 8)
