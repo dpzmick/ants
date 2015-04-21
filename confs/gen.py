@@ -8,7 +8,7 @@ if __name__ == "__main__":
     xmax = 250
     ymax = 250
     numants = 250
-    runtime = 60
+    runtime = 120
     default = 1.0
 
     f = open('confs/generated.conf', "w")

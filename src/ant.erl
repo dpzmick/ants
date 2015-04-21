@@ -2,7 +2,7 @@
 -export([start/2, wakeup_and_move/1, tell_neighbors/2, you_moved/2, failed_move/1, ant_id/1, stop/1]).
 
 %% pick one of these randomly (using their weight) and try to move to it
-priv_pick_neighbor(Neighbors) ->
+priv_pick_neighbor(Neighbors, CurrentCell) ->
     Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
     Weights = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
     Sum = lists:sum(Weights),
@@ -11,10 +11,17 @@ priv_pick_neighbor(Neighbors) ->
                           fun({P,C}, Acc) -> [C || _ <- lists:seq(1, round(P*100))] ++ Acc end,
                           [], lists:zip(Probabilities, Cells)),
     Index = random:uniform(length(HackyWeightedList)),
+    MaxNeighbors = lists:max(Weights),
+    CurrentWeight = cell:cell_weight(CurrentCell),
+    if
+        MaxNeighbors > CurrentWeight ->
+            cell:set_weight(CurrentCell, MaxNeighbors / 2);
+        true -> ok
+    end,
     lists:nth(Index, HackyWeightedList).
 
-priv_got_neighbors(Neighbors) ->
-    Choice = priv_pick_neighbor(Neighbors),
+priv_got_neighbors(Neighbors, CurrentCell) ->
+    Choice = priv_pick_neighbor(Neighbors, CurrentCell),
     cell:move_ant_to(Choice, self()).
 
 priv_statify(Id, CurrentCell, Reporter) -> {Id, CurrentCell, Reporter}.
@@ -35,7 +42,7 @@ inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) when is_pid(Waiter), is_
             ToTell ! stopped;
 
         {neighbors, Neighbors} ->
-            priv_got_neighbors(Neighbors),
+            priv_got_neighbors(Neighbors, CurrentCell),
             inner_loop(Waiter, State);
 
         {move_to, Cell} ->

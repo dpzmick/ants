@@ -1,6 +1,6 @@
 -module(cell).
 -export([start/1, start/2, register_neighbor/3, tell_neighbors/2, move_ant_to/2,
-         ant_leaving/2, cell_id/1, cell_weight/1, stop/1]).
+         ant_leaving/2, cell_id/1, cell_weight/1, set_weight/2, stop/1]).
 
 priv_statify(Dict, Occupant, Weight, Id) -> {Dict, Occupant, Weight, Id}.
 
@@ -29,7 +29,7 @@ outer_loop(State) ->
         0 -> loop(State)
     end.
 
-loop(State = {Dict, _Occupant, Weight, Id}) ->
+loop(State = {Dict, Occupant, Weight, Id}) ->
     receive
         {stop, ToWho} ->
             ToWho ! stopped;
@@ -50,7 +50,11 @@ loop(State = {Dict, _Occupant, Weight, Id}) ->
 
         {tell_id, ToWho} -> ToWho ! {told_id, Id}, outer_loop(State);
 
-        {tell_weight, ToWho} -> ToWho ! {told_weight, Weight}, outer_loop(State)
+        {tell_weight, ToWho} -> ToWho ! {told_weight, Weight}, outer_loop(State);
+
+        {update_weight, NewWeight} when is_number(NewWeight) ->
+            io:format("[~p] OldWeight: ~p NewWeight: ~p~n", [Id, Weight, NewWeight]),
+            outer_loop({Dict, Occupant, NewWeight, Id})
     end.
 
 %% public api
@@ -73,6 +77,7 @@ ant_leaving(undefined, _) -> ok;
 ant_leaving(Cell, Ant) when is_pid(Cell), is_pid(Ant) ->
     Cell ! {Ant, ive_left}.
 
+cell_id(undefined) -> undefined;
 cell_id(Cell) when is_pid(Cell) ->
     Cell ! {tell_id, self()},
     receive
@@ -84,6 +89,9 @@ cell_weight(Cell) when is_pid(Cell) ->
     receive
         {told_weight, Weight} -> Weight
     end.
+
+set_weight(Cell, NewWeight) when is_number(NewWeight) ->
+    Cell ! {update_weight, NewWeight}.
 
 stop(undefined) -> ok;
 stop(Cell) when is_pid(Cell) ->
