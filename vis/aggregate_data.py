@@ -28,10 +28,10 @@ if __name__ == "__main__":
 
     datas = []
 
+    print 'reading data'
+
     done = 0.0
     for inpt in inputs:
-        print '\r                              ',
-        print '\r' + str((done/(len(inputs)-1)) * 100) + '%',
         f = open(inpt, 'r', 32768)
 
         c = csv.reader(f, delimiter=',')
@@ -47,9 +47,13 @@ if __name__ == "__main__":
         done += 1.0
         f.close()
 
+    print 'done reading data'
+
     of = open(output, 'w', 32768)
 
     of.write("time,ant_id,cell_x,cell_y\n")
+
+    print 'writing data'
 
     start_time = None
     for dat in heapq.merge(*datas):
@@ -66,3 +70,5 @@ if __name__ == "__main__":
         of.write(s)
 
     of.close()
+
+    print 'done writing data'

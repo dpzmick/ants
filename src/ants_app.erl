@@ -46,9 +46,14 @@ start(ConfFileName, OutputDir) ->
     Cells = array:from_list([cell:start({X,Y}, sim_config:cell_weight(Conf,X,Y)) || {X,Y} <- CellCoords]),
     iter(Xmax, Ymax, Cells, 0, 0),
 
+    filelib:ensure_dir(io_lib:format("~s/ants/", [OutputDir])),
+    filelib:ensure_dir(io_lib:format("~s/cells/", [OutputDir])),
+
     Ants = lists:map(
       fun (X) ->
-              Reporter = reporter:start(io_lib:format("~s/ant~p", [OutputDir, X])),
+              Ants_file = io_lib:format("~s/ants/~p", [OutputDir, X]),
+              Cells_file = io_lib:format("~s/cells/~p", [OutputDir, X]),
+              Reporter = reporter:start(Ants_file, Cells_file),
               A = ant:start(X, Reporter),
               cell:move_ant_to(array:get(X, Cells), A),
               {Reporter, A}
