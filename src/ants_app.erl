@@ -1,5 +1,5 @@
 -module(ants_app).
--export([start/4, stop/1]).
+-export([start/2, stop/1]).
 
 xy_toIndex(Xmax, X, Y) -> X + Y*Xmax.
 
@@ -37,9 +37,13 @@ loop(Ant) ->
     ant:wakeup_and_move(Ant),
     loop(Ant).
 
-start(Xmax, Ymax, NumAnts, OutputDir) ->
+start(ConfFileName, OutputDir) ->
+    Conf = sim_config:from_file(ConfFileName),
+    Xmax = sim_config:xmax(Conf),
+    Ymax = sim_config:ymax(Conf),
+    NumAnts = sim_config:numants(Conf),
     CellCoords = [{X,Y} || X <- lists:seq(1,Xmax), Y <- lists:seq(1,Ymax)],
-    Cells = array:from_list([cell:start(Id) || Id <- CellCoords]),
+    Cells = array:from_list([cell:start({X,Y}, sim_config:cell_weight(Conf,X,Y)) || {X,Y} <- CellCoords]),
     iter(Xmax, Ymax, Cells, 0, 0),
 
     Ants = lists:map(
