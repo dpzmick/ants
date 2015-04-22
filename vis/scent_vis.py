@@ -34,7 +34,6 @@ class ScentFrame:
 if __name__ == "__main__":
     conf_file = sys.argv[2]
 
-
     f = open(conf_file, 'r')
     xmax = int(f.readline().strip().split(": ")[1])
     ymax = int(f.readline().strip().split(": ")[1])

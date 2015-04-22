@@ -1,14 +1,29 @@
-def weight(x,y):
-    if x == y:
+# single diag
+# def weight(x,y):
+#     if x == y:
+#         return 100.0
+#     else:
+#         return 'DEFAULT'
+
+# square in center
+# def weight(x, y):
+#     if x >= 115 and x <= 135 and y >= 115 and y <= 135:
+#         return 100.0
+#     else:
+#         return 'DEFAULT'
+
+# close to top
+def weight(x, y):
+    if x >= 115 and x <= 135 and y >= 100 and y <= 120:
         return 100.0
     else:
         return 'DEFAULT'
 
 if __name__ == "__main__":
-    xmax = 1000
-    ymax = 1000
+    xmax = 250
+    ymax = 250
     numants = 1000
-    runtime = 60
+    runtime = 120
     default = 1.0
 
     f = open('confs/generated.conf', "w")
