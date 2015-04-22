@@ -5,10 +5,10 @@ def weight(x,y):
         return 'DEFAULT'
 
 if __name__ == "__main__":
-    xmax = 250
-    ymax = 250
-    numants = 250
-    runtime = 120
+    xmax = 1000
+    ymax = 1000
+    numants = 1000
+    runtime = 60
     default = 1.0
 
     f = open('confs/generated.conf', "w")
