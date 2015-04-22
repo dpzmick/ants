@@ -42,5 +42,6 @@ python vis/aggregate_data.py $DATADIR/ants.csv $DATADIR/cells.csv $INDIVIDUAL_DI
 
 mkdir $VID_TMP_DIR
 python vis/static_vis.py $DATADIR/ants.csv $DATADIR $VID_TMP_DIR $1
+rm -rf $VID_TMP_DIR
 
 cp $1 $DATADIR/.
