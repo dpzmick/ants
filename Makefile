@@ -1,11 +1,13 @@
+PA=-pa ebin/ jiffy/ebin/
+
 all:
 	erl -make
 
 run: all
-	erl -pa ebin/
+	erl $(PA)
 
 bigrun: all
-	erl -pa ebin/ +P 134217727
+	erl $(PA) +P 134217727
 
 clean:
 	rm ebin/*

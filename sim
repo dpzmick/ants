@@ -1,5 +1,5 @@
 #!/usr/bin/env escript
-%%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/ +P 134217727
+%%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/ jiffy/ebin/ +P 134217727
 
 main([ConfFileName, OutputDir]) ->
     %% still need to extract all of this in the ants_app

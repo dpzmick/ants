@@ -1,4 +1,4 @@
 #!/usr/bin/env escript
-%%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/
+%%! -smp enable -sname factorial -mnesia debug verbose -pa ebin/ jiffy/ebin/
 
 main(_) -> eunit:test(cell_tests), eunit:test(ant_tests), eunit:test(sim_config_tests).
