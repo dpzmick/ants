@@ -14,7 +14,7 @@
 
 # close to top
 def weight(x, y):
-    if x >= 115 and x <= 135 and y >= 100 and y <= 120:
+    if y >= 115 and y <= 135 and x >= 50 and x <= 70:
         return 100.0
     else:
         return 'DEFAULT'
