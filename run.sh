@@ -38,7 +38,7 @@ mv $TMPDIR/* $INDIVIDUAL_DIR
 rmdir $TMPDIR
 
 # run the processing scripts
-python vis/aggregate_data.py $DATADIR/ants.csv $DATADIR/cells.csv $INDIVIDUAL_DIR/ants/*
+python vis/aggregate_data.py $DATADIR/ants.csv $DATADIR/cells.csv $INDIVIDUAL_DIR/*
 
 mkdir $VID_TMP_DIR
 python vis/static_vis.py $DATADIR/ants.csv $DATADIR $VID_TMP_DIR $1
