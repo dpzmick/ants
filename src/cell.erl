@@ -1,6 +1,6 @@
 -module(cell).
 -export([start/1, start/2, register_neighbor/3, tell_neighbors/2, move_ant_to/2,
-         ant_leaving/2, cell_id/1, cell_weight/1, set_weight/2, stop/1]).
+         ant_leaving/2, cell_id/1, cell_weight/1, set_weight/2, distance/2, stop/1]).
 
 priv_statify(Dict, Occupant, Weight, Id) -> {Dict, Occupant, Weight, Id}.
 
@@ -91,6 +91,13 @@ cell_weight(Cell) when is_pid(Cell) ->
 
 set_weight(Cell, NewWeight) when is_number(NewWeight) ->
     Cell ! {update_weight, NewWeight}.
+
+distance(Cell1, Cell2) ->
+    {X1, Y1} = cell_id(Cell1),
+    {X2, Y2} = cell_id(Cell2),
+    T1 = math:pow(X1 - X2, 2),
+    T2 = math:pow(Y1 - Y2, 2),
+    math:sqrt(T1 + T2).
 
 stop(undefined) -> ok;
 stop(Cell) when is_pid(Cell) ->

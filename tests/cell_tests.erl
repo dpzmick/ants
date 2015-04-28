@@ -97,3 +97,23 @@ cell_get_weight_test_() ->
              ?assert(W == 10)
      end
     }.
+
+cell_distance_1_test_() ->
+    {
+     "test distance formula",
+     fun () ->
+             C1 = cell:start({0,0}),
+             C2 = cell:start({0,50}),
+             ?assert(cell:distance(C1, C2) == 50.0)
+     end
+    }.
+
+cell_distance_2_test_() ->
+    {
+     "test distance with pythagorean triple",
+     fun () ->
+             C1 = cell:start({0,0}),
+             C2 = cell:start({3,4}),
+             ?assert(cell:distance(C1, C2) == 5.0)
+     end
+    }.
