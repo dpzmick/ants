@@ -26,23 +26,21 @@ priv_got_neighbors(Reporter, Neighbors, CurrentCell) ->
     Choice = priv_pick_neighbor(Reporter, Neighbors, CurrentCell),
     cell:move_ant_to(Choice, self()).
 
-priv_statify(Id, CurrentCell, Reporter) -> {Id, CurrentCell, Reporter}.
+priv_statify(Id, CurrentCell, Reporter, StartingCell) -> {Id, CurrentCell, Reporter, StartingCell}.
 
-outer_loop(State = {Id, _, _}) when is_number(Id) ->
+priority_wrapper({Id, _, _}, Function) when is_number(Id) ->
     receive
         {stop, ToTell} ->
             ToTell ! stopped;
 
-        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
+        {tell_id, To} -> To ! {told_id, Id}, Function()
     after
-        0 -> loop(State)
+        0 -> Function()
     end.
 
-inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) when is_pid(Waiter), is_number(Id) ->
+inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell})
+  when is_pid(Waiter), is_number(Id) ->
     receive
-        {stop, ToTell} ->
-            ToTell ! stopped;
-
         {neighbors, Neighbors} ->
             priv_got_neighbors(Reporter, Neighbors, CurrentCell),
             inner_loop(Waiter, State);
@@ -51,16 +49,24 @@ inner_loop(Waiter, State = {Id, CurrentCell, Reporter}) when is_pid(Waiter), is_
             reporter:report_move(Reporter, os:timestamp(), Id, cell:cell_id(Cell)),
             cell:ant_leaving(CurrentCell, self()),
             Waiter ! done,
-            outer_loop(priv_statify(Id, Cell, Reporter));
+            if
+                StartingCell == undefined ->
+                    loop(priv_statify(Id, Cell, Reporter, Cell));
+                true ->
+                    loop(priv_statify(Id, Cell, Reporter, StartingCell))
+            end;
 
         move_failed ->
             Waiter ! done,
-            outer_loop(State);
+            loop(State);
 
-        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
+        {stop, ToTell} ->
+            ToTell ! stopped;
+
+        {tell_id, To} -> To ! {told_id, Id}, inner_loop_helper(Waiter, State)
     end.
 
-loop(State = {Id, CurrentCell, _}) when is_number(Id) ->
+loop_helper(State = {Id, CurrentCell, _}) ->
     receive
         {wakeup_and_move, Waiter} ->
             cell:tell_neighbors(CurrentCell, self()),
@@ -69,15 +75,18 @@ loop(State = {Id, CurrentCell, _}) when is_number(Id) ->
         {stop, ToTell} ->
             ToTell ! stopped;
 
-        {tell_id, To} -> To ! {told_id, Id}, outer_loop(State)
+        {tell_id, To} -> To ! {told_id, Id}, loop_helper(State)
     end.
+
+inner_loop(Waiter, State) -> priority_wrapper(State, fun () -> inner_loop_helper(Waiter, State) end).
+loop(State) -> priority_wrapper(State, fun () -> loop_helper(State) end).
 
 %% public api
 start(Id, Reporter) when is_number(Id) ->
     spawn(fun () ->
                   {A,B,C} = erlang:now(),
                   random:seed(A, B, C + Id),
-                  outer_loop({Id, undefined, Reporter})
+                  loop({Id, undefined, Reporter})
           end).
 
 %% blocks
