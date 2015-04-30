@@ -13,20 +13,36 @@ priv_do_weight_update(Reporter, Weights, CurrentCell) ->
         true -> ok
     end.
 
-priv_pick_neighbor(Cells, Weights) ->
-    Sum = lists:sum(Weights),
-    Probabilities = lists:map(fun(W) -> W / Sum end, Weights),
+priv_pick_neighbor(Cells, Probabilities) ->
     HackyWeightedList = lists:foldl(
                           fun({P,C}, Acc) -> [C || _ <- lists:seq(1, round(P*100))] ++ Acc end,
                           [], lists:zip(Probabilities, Cells)),
     Index = random:uniform(length(HackyWeightedList)),
     lists:nth(Index, HackyWeightedList).
 
-priv_got_neighbors(Reporter, Neighbors, CurrentCell) ->
+priv_got_neighbors(Reporter, Neighbors, CurrentCell, StartingCell) ->
     Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
-    Weights = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
-    Choice = priv_pick_neighbor(Cells, Weights),
-    priv_do_weight_update(Reporter, Weights, CurrentCell),
+
+    %% compute distances
+    Distances = lists:map(fun(Cell) -> cell:distance(Cell, StartingCell) end, Cells),
+    DSum      = lists:sum(Distances),
+    NormDists = lists:map(fun(D) -> D / DSum end, Distances),
+
+    %% compute pheromone stuff
+    Smells     = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
+    SSum       = lists:sum(Smells),
+    NormSmells = lists:map(fun(S) -> S / SSum end, Smells),
+
+    %% compute cell move probability
+    DWeight = 0.5,
+    SWeight = 1.0,
+    Zipped = lists:zip(NormDists, NormSmells),
+    Weights = lists:map(fun ({D, S}) -> DWeight*D + SWeight * S end, Zipped),
+    Sum = lists:sum(Weights),
+    Probs = lists:map(fun (W) -> W / Sum end, Weights),
+
+    Choice = priv_pick_neighbor(Cells, Probs),
+    priv_do_weight_update(Reporter, Smells, CurrentCell),
     cell:move_ant_to(Choice, self()).
 
 priv_statify(Id, CurrentCell, Reporter, StartingCell, away) ->
@@ -49,7 +65,7 @@ inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell, Dire
   when is_pid(Waiter), is_number(Id) ->
     receive
         {neighbors, Neighbors} ->
-            priv_got_neighbors(Reporter, Neighbors, CurrentCell),
+            priv_got_neighbors(Reporter, Neighbors, CurrentCell, StartingCell),
             inner_loop(Waiter, State);
 
         {move_to, Cell} ->
