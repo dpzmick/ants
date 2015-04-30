@@ -1,16 +1,7 @@
 -module(ant).
 -export([start/2, wakeup_and_move/1, tell_neighbors/2, you_moved/2, failed_move/1, ant_id/1, stop/1]).
 
-%% pick one of these randomly (using their weight) and try to move to it
-priv_pick_neighbor(Reporter, Neighbors, CurrentCell) ->
-    Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
-    Weights = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
-    Sum = lists:sum(Weights),
-    Probabilities = lists:map(fun(W) -> W / Sum end, Weights),
-    HackyWeightedList = lists:foldl(
-                          fun({P,C}, Acc) -> [C || _ <- lists:seq(1, round(P*100))] ++ Acc end,
-                          [], lists:zip(Probabilities, Cells)),
-    Index = random:uniform(length(HackyWeightedList)),
+priv_do_weight_update(Reporter, Weights, CurrentCell) ->
     MaxNeighbors = lists:max(Weights),
     NewWeight = MaxNeighbors / 2,
     CurrentWeight = cell:cell_weight(CurrentCell),
@@ -19,16 +10,29 @@ priv_pick_neighbor(Reporter, Neighbors, CurrentCell) ->
             reporter:report_cell_change(Reporter, os:timestamp(), cell:cell_id(CurrentCell), NewWeight),
             cell:set_weight(CurrentCell, NewWeight);
         true -> ok
-    end,
+    end.
+
+%% pick one of these randomly (using their weight) and try to move to it
+priv_pick_neighbor(Cells, Weights) ->
+    Sum = lists:sum(Weights),
+    Probabilities = lists:map(fun(W) -> W / Sum end, Weights),
+    HackyWeightedList = lists:foldl(
+                          fun({P,C}, Acc) -> [C || _ <- lists:seq(1, round(P*100))] ++ Acc end,
+                          [], lists:zip(Probabilities, Cells)),
+    Index = random:uniform(length(HackyWeightedList)),
     lists:nth(Index, HackyWeightedList).
 
-priv_got_neighbors(Reporter, Neighbors, CurrentCell) ->
-    Choice = priv_pick_neighbor(Reporter, Neighbors, CurrentCell),
+priv_got_neighbors(Cells, Weights) ->
+    Choice = priv_pick_neighbor(Cells, Weights),
     cell:move_ant_to(Choice, self()).
 
-priv_statify(Id, CurrentCell, Reporter, StartingCell) -> {Id, CurrentCell, Reporter, StartingCell}.
+priv_statify(Id, CurrentCell, Reporter, StartingCell, away) ->
+    {Id, CurrentCell, Reporter, StartingCell, away};
 
-priority_wrapper({Id, _, _}, Function) when is_number(Id) ->
+priv_statify(Id, CurrentCell, Reporter, StartingCell, back) ->
+    {Id, CurrentCell, Reporter, StartingCell, back}.
+
+priority_wrapper({Id, _, _, _, _}, Function) when is_number(Id) ->
     receive
         {stop, ToTell} ->
             ToTell ! stopped;
@@ -38,11 +42,14 @@ priority_wrapper({Id, _, _}, Function) when is_number(Id) ->
         0 -> Function()
     end.
 
-inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell})
+inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell, Direction})
   when is_pid(Waiter), is_number(Id) ->
     receive
         {neighbors, Neighbors} ->
-            priv_got_neighbors(Reporter, Neighbors, CurrentCell),
+            Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
+            Weights = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
+            priv_got_neighbors(Cells, Weights),
+            priv_do_weight_update(Reporter, Weights, CurrentCell),
             inner_loop(Waiter, State);
 
         {move_to, Cell} ->
@@ -51,9 +58,9 @@ inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell})
             Waiter ! done,
             if
                 StartingCell == undefined ->
-                    loop(priv_statify(Id, Cell, Reporter, Cell));
+                    loop(priv_statify(Id, Cell, Reporter, Cell, Direction));
                 true ->
-                    loop(priv_statify(Id, Cell, Reporter, StartingCell))
+                    loop(priv_statify(Id, Cell, Reporter, StartingCell, Direction))
             end;
 
         move_failed ->
@@ -66,7 +73,7 @@ inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell})
         {tell_id, To} -> To ! {told_id, Id}, inner_loop_helper(Waiter, State)
     end.
 
-loop_helper(State = {Id, CurrentCell, _}) ->
+loop_helper(State = {Id, CurrentCell, _, _, _}) ->
     receive
         {wakeup_and_move, Waiter} ->
             cell:tell_neighbors(CurrentCell, self()),
@@ -86,7 +93,7 @@ start(Id, Reporter) when is_number(Id) ->
     spawn(fun () ->
                   {A,B,C} = erlang:now(),
                   random:seed(A, B, C + Id),
-                  loop({Id, undefined, Reporter})
+                  loop(priv_statify(Id, undefined, Reporter, undefined, away))
           end).
 
 %% blocks
