@@ -1,6 +1,7 @@
 -module(ant).
 -export([start/2, wakeup_and_move/1, tell_neighbors/2, you_moved/2, failed_move/1, ant_id/1, stop/1]).
 
+%% TODO add decaying weight
 priv_do_weight_update(Reporter, Weights, CurrentCell) ->
     MaxNeighbors = lists:max(Weights),
     NewWeight = MaxNeighbors / 2,
@@ -12,7 +13,6 @@ priv_do_weight_update(Reporter, Weights, CurrentCell) ->
         true -> ok
     end.
 
-%% pick one of these randomly (using their weight) and try to move to it
 priv_pick_neighbor(Cells, Weights) ->
     Sum = lists:sum(Weights),
     Probabilities = lists:map(fun(W) -> W / Sum end, Weights),
@@ -22,8 +22,11 @@ priv_pick_neighbor(Cells, Weights) ->
     Index = random:uniform(length(HackyWeightedList)),
     lists:nth(Index, HackyWeightedList).
 
-priv_got_neighbors(Cells, Weights) ->
+priv_got_neighbors(Reporter, Neighbors, CurrentCell) ->
+    Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
+    Weights = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
     Choice = priv_pick_neighbor(Cells, Weights),
+    priv_do_weight_update(Reporter, Weights, CurrentCell),
     cell:move_ant_to(Choice, self()).
 
 priv_statify(Id, CurrentCell, Reporter, StartingCell, away) ->
@@ -46,10 +49,7 @@ inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell, Dire
   when is_pid(Waiter), is_number(Id) ->
     receive
         {neighbors, Neighbors} ->
-            Cells = lists:map(fun({_,Cell}) -> Cell end, dict:to_list(Neighbors)),
-            Weights = lists:map(fun(C) -> cell:cell_weight(C) end, Cells),
-            priv_got_neighbors(Cells, Weights),
-            priv_do_weight_update(Reporter, Weights, CurrentCell),
+            priv_got_neighbors(Reporter, Neighbors, CurrentCell),
             inner_loop(Waiter, State);
 
         {move_to, Cell} ->
