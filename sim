@@ -19,6 +19,7 @@ main([ConfFileName, OutputDir]) ->
 
     A = ants_app:start(ConfFileName, OutputDir),
 
+    io:format("Starting timer~n"),
     timer:sleep(Runtime * 1000),
     ants_app:stop(A),
     io:format("Simulation done ~p~n", [os:timestamp()]);
