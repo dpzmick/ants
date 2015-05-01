@@ -1,5 +1,5 @@
 -module(reporter).
--export([start/1, report_move/4, report_cell_change/4, stop/1]).
+-export([start/1, report_move/4, report_cell_change/4, report_got_home/3, stop/1]).
 
 % for some reason I have to open the file in the processes, can't open it then pass it in
 starter(Filename) ->
@@ -17,6 +17,25 @@ report(Doc, Fd) ->
 
 loop(Fd) ->
     receive
+        {got_home, [Time, AntId]} ->
+            {MegaSecs, Secs, MicroSecs} = Time,
+            Doc = {[
+              {time, {
+                 [
+                  {megasecs, MegaSecs},
+                  {secs, Secs},
+                  {microsecs, MicroSecs}
+                 ]
+              }},
+              {anthome, {
+                 [
+                  {antid, AntId}
+                 ]
+              }}
+            ]},
+            report(Doc, Fd),
+            loop(Fd);
+
         {move, [Time, AntId, CellId]} ->
             {MegaSecs, Secs, MicroSecs} = Time,
             {CellX, CellY} = CellId,
@@ -79,6 +98,9 @@ report_move(Reporter, Time, AntId, CellId) ->
 
 report_cell_change(Reporter, Time, CellId, NewWeight) ->
     Reporter ! {weight_change, [Time, CellId, NewWeight]}.
+
+report_got_home(Reporter, Time, AntId) ->
+    Reporter ! {got_home, [Time, AntId]}.
 
 stop(undefined) -> ok;
 stop(Reporter) ->

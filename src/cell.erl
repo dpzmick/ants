@@ -1,6 +1,6 @@
 -module(cell).
 -export([start/1, start/2, register_neighbor/3, tell_neighbors/2, move_ant_to/2,
-         ant_leaving/2, cell_id/1, cell_weight/1, set_weight/2, distance/2, stop/1]).
+         ant_leaving/2, cell_id/1, eq/2, has_food/1, cell_weight/1, set_weight/2, distance/2, stop/1]).
 
 priv_statify(Dict, Occupant, Weight, Id) -> {Dict, Occupant, Weight, Id}.
 
@@ -81,6 +81,19 @@ cell_id(Cell) when is_pid(Cell) ->
     Cell ! {tell_id, self()},
     receive
         {told_id, Id} -> Id
+    end.
+
+eq(Cell1, Cell2) ->
+    Id1 = cell_id(Cell1),
+    Id2 = cell_id(Cell2),
+    Id1 == Id2.
+
+has_food(undefined) -> false;
+has_food(Cell) when is_pid(Cell) ->
+    {X,Y} = cell_id(Cell),
+    if
+        (X == 70) and (Y < 50) -> true;
+        true -> false
     end.
 
 cell_weight(Cell) when is_pid(Cell) ->
