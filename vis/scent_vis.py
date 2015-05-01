@@ -12,11 +12,11 @@ class ScentFrame:
         self.grid_y_size = y_size * cell_pixels
         self.cell_pixels = cell_pixels
 
-        self.data = np.zeros( (self.grid_x_size, self.grid_y_size, 3), dtype=np.uint8)
+        self.data = np.zeros( (self.grid_x_size, self.grid_y_size) , dtype=np.uint8)
         self.clear()
 
     def clear(self):
-        self.data.fill(255)
+        self.data.fill(0)
 
     def set_scent_level(self, x, y, level):
         gx_start = (x-1) * self.cell_pixels
@@ -25,7 +25,7 @@ class ScentFrame:
         gy_start = (y-1) * self.cell_pixels
         gy_end = gy_start + self.cell_pixels
 
-        self.data[gx_start:gx_end, gy_start:gy_end] = [255 - level, 0, 0]
+        self.data[gx_start:gx_end, gy_start:gy_end] = level
 
     def get_image(self):
         return self.data
