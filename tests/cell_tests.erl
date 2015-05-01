@@ -117,3 +117,13 @@ cell_distance_2_test_() ->
              ?assert(cell:distance(C1, C2) == 5.0)
      end
     }.
+
+cell_distance_3_test_() ->
+    {
+     "test distance from real bug",
+     fun () ->
+             C1 = cell:start({1,2}),
+             C2 = cell:start({2,2}),
+             ?assert(cell:distance(C1, C2) == 1.0)
+     end
+    }.
