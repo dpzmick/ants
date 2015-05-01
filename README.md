@@ -38,3 +38,5 @@ I don't have a good frame of reference for ant simulation performance.
 
 The python scripts all have pretty abysmal performance, but thats fine,
 just don't do a big run unless you have time to kill.
+
+sudo sysctl -w kern.maxfilesperproc=20480
