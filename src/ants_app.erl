@@ -51,7 +51,7 @@ start(ConfFileName, OutputDir) ->
               Ants_file = io_lib:format("~s/ant~p", [OutputDir, X]),
               Reporter = reporter:start(Ants_file),
               A = ant:start(X, Reporter),
-              cell:move_ant_to(array:get(X, Cells), A),
+              cell:move_ant_to(array:get(X - 1, Cells), A),
               {Reporter, A}
       end,
       lists:seq(1,NumAnts)),
