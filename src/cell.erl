@@ -1,6 +1,7 @@
 -module(cell).
 -export([start/1, start/2, register_neighbor/3, tell_neighbors/2, move_ant_to/2,
-         ant_leaving/2, cell_id/1, eq/2, has_food/1, cell_weight/1, set_weight/2, distance/2, stop/1]).
+         ant_leaving/2, cell_id/1, eq/2, at_edge/1, has_food/1, cell_weight/1,
+         set_weight/2, distance/2, stop/1]).
 
 priv_statify(Dict, Occupant, Weight, Id) -> {Dict, Occupant, Weight, Id}.
 
@@ -52,6 +53,19 @@ loop(State = {Dict, Occupant, Weight, Id}) ->
 
         {tell_weight, ToWho} -> ToWho ! {told_weight, Weight}, outer_loop(State);
 
+        {at_edge, ToWho} ->
+            case dict:find(n, Dict) of
+                {ok, _} ->
+                    case dict:find(s, Dict) of
+                        {ok, _} ->
+                            ToWho ! {at_edge, false}, outer_loop(State);
+                        error ->
+                            ToWho ! {at_edge, true}, outer_loop(State)
+                    end;
+                error ->
+                    ToWho ! {at_edge, true}, outer_loop(State)
+            end;
+
         {update_weight, NewWeight} when is_number(NewWeight) ->
             outer_loop({Dict, Occupant, NewWeight, Id})
     end.
@@ -87,6 +101,12 @@ eq(Cell1, Cell2) ->
     Id1 = cell_id(Cell1),
     Id2 = cell_id(Cell2),
     Id1 == Id2.
+
+at_edge(Cell) ->
+    Cell ! {at_edge, self()},
+    receive
+        {at_edge, Value} -> Value
+    end.
 
 has_food(undefined) -> false;
 has_food(Cell) when is_pid(Cell) ->

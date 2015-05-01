@@ -1,6 +1,9 @@
 -module(ant).
 -export([start/2, wakeup_and_move/1, tell_neighbors/2, you_moved/2, failed_move/1, ant_id/1, stop/1]).
 
+opposite_direction(away) -> towards;
+opposite_direction(towards) -> away.
+
 %% TODO add decaying weight
 priv_do_weight_update(Reporter, Weights, CurrentCell) ->
     MaxNeighbors = lists:max(Weights),
@@ -47,7 +50,7 @@ priv_got_neighbors(Neighbors, {_, CurrentCell, Reporter, StartingCell, Direction
     %% compute cell move probability
     Zipped = lists:zip(NormDists, NormSmells),
     Weights = lists:map(fun ({D, S}) -> DWeight*D + SWeight * S end, Zipped),
-    Sum = min(1, lists:sum(Weights)),
+    Sum = max(1, lists:sum(Weights)),
     Probs = lists:map(fun (W) -> W / Sum end, Weights),
 
     Choice = priv_pick_neighbor(Cells, Probs),
@@ -84,20 +87,25 @@ inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell, Dire
             cell:ant_leaving(CurrentCell, self()),
             Food = cell:has_food(Cell),
             Start = cell:eq(StartingCell, Cell),
+            AtEdge = cell:at_edge(Cell),
             Waiter ! done,
             if
+                %% catches the case where we are on edge but this is the first cell
                 StartingCell == undefined ->
                     loop(priv_statify(Id, Cell, Reporter, Cell, Direction, D, S));
                 true ->
                     if
                         Food ->
-                            NewWeight = 100.0,
+                            NewWeight = 1000.0,
                             reporter:report_cell_change(Reporter, os:timestamp(), cell:cell_id(Cell), NewWeight),
                             reporter:report_got_home(Reporter, os:timestamp(), Id),
                             cell:set_weight(Cell, NewWeight),
                             loop(priv_statify(Id, Cell, Reporter, StartingCell, towards, 0.3, S));
                         Start ->
                             loop(priv_statify(Id, Cell, Reporter, StartingCell, away, D, 0.0));
+                        AtEdge ->
+                            loop(priv_statify(Id, Cell, Reporter, StartingCell,
+                                              opposite_direction(Direction), D, S));
                         true ->
                             loop(priv_statify(Id, Cell, Reporter, StartingCell, Direction, D, S))
                     end
