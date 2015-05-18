@@ -34,8 +34,8 @@ readline_helper(Fd, Expected, float) ->
 handle_cell_line(Line) ->
     [X,Y,WeightOrFood] = string:tokens(string:strip(Line, both, $\n), ","),
     [{Ox, _}, {Oy, _}] = [string:to_integer(X), string:to_integer(Y)],
-    case string:to_integer(WeightOrFood) of
-        {error, no_integer} -> [Ox, Oy, food];
+    case string:to_float(WeightOrFood) of
+        {error, no_float} -> [Ox, Oy, food];
         {Ow, _} -> [Ox, Oy, Ow]
     end.
 
@@ -84,5 +84,6 @@ cell_has_food({_,_,_,_,_,Bound}, X, Y) ->
 cell_weight({_,_,_,_,DefaultWeight,Bound}, X, Y) ->
     case dict:find({X,Y}, Bound) of
         {ok, Weight} when is_number(Weight) -> Weight;
-        error -> DefaultWeight
+        {ok, food} -> DefaultWeight;
+        _ -> DefaultWeight
     end.
