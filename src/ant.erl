@@ -4,7 +4,6 @@
 opposite_direction(away) -> towards;
 opposite_direction(towards) -> away.
 
-%% TODO add decaying weight
 priv_do_weight_update(Reporter, Weights, CurrentCell) ->
     MaxNeighbors = lists:max(Weights),
     NewWeight = MaxNeighbors / 2,

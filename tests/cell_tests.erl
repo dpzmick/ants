@@ -92,7 +92,7 @@ cell_get_weight_test_() ->
     {
      "test getting the weight of a cell",
      fun () ->
-             C = cell:start(c1, 10),
+             C = cell:start(c1, 10, false),
              W = cell:cell_weight(C),
              ?assert(W == 10)
      end

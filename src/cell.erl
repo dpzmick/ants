@@ -1,9 +1,9 @@
 -module(cell).
--export([start/1, start/2, register_neighbor/3, tell_neighbors/2, move_ant_to/2,
+-export([start/1, start/3, register_neighbor/3, tell_neighbors/2, move_ant_to/2,
          ant_leaving/2, cell_id/1, eq/2, at_edge/1, has_food/1, cell_weight/1,
          set_weight/2, distance/2, stop/1]).
 
-priv_statify(Dict, Occupant, Weight, Id) -> {Dict, Occupant, Weight, Id}.
+priv_statify(Dict, Occupant, Weight, Id, HasFood) -> {Dict, Occupant, Weight, Id, HasFood}.
 
 opposite_direction(Direction) ->
     case Direction of
@@ -13,12 +13,12 @@ opposite_direction(Direction) ->
         w -> e
     end.
 
-priv_register_neighbor({Dict, Occupant, Weight, Id}, Cell, Direction) ->
-    outer_loop(priv_statify(dict:store(Direction, Cell, Dict), Occupant, Weight, Id)).
+priv_register_neighbor({Dict, Occupant, Weight, Id, HasFood}, Cell, Direction) ->
+    outer_loop(priv_statify(dict:store(Direction, Cell, Dict), Occupant, Weight, Id, HasFood)).
 
-priv_move_ant_to(State = {Dict, Occupant, Weight, Id}, Ant) ->
+priv_move_ant_to(State = {Dict, Occupant, Weight, Id, HasFood}, Ant) ->
     case Occupant of
-        undefined -> ant:you_moved(Ant, self()), outer_loop(priv_statify(Dict, Ant, Weight, Id));
+        undefined -> ant:you_moved(Ant, self()), outer_loop(priv_statify(Dict, Ant, Weight, Id, HasFood));
         _ -> ant:failed_move(Ant), outer_loop(State)
     end.
 
@@ -30,7 +30,7 @@ outer_loop(State) ->
         0 -> loop(State)
     end.
 
-loop(State = {Dict, Occupant, Weight, Id}) ->
+loop(State = {Dict, Occupant, Weight, Id, HasFood}) ->
     receive
         {stop, ToWho} ->
             ToWho ! stopped;
@@ -47,11 +47,13 @@ loop(State = {Dict, Occupant, Weight, Id}) ->
 
         {Ant, move_me_to_you} -> priv_move_ant_to(State, Ant);
 
-        {_Ant, ive_left} -> outer_loop(priv_statify(Dict, undefined, Weight, Id));
+        {_Ant, ive_left} -> outer_loop(priv_statify(Dict, undefined, Weight, Id, HasFood));
 
         {tell_id, ToWho} -> ToWho ! {told_id, Id}, outer_loop(State);
 
         {tell_weight, ToWho} -> ToWho ! {told_weight, Weight}, outer_loop(State);
+
+        {has_food, ToWho} -> ToWho ! {has_food, HasFood}, outer_loop(State);
 
         {at_edge, ToWho} ->
             case dict:find(n, Dict) of
@@ -67,14 +69,14 @@ loop(State = {Dict, Occupant, Weight, Id}) ->
             end;
 
         {update_weight, NewWeight} when is_number(NewWeight) ->
-            outer_loop({Dict, Occupant, NewWeight, Id})
+            outer_loop(priv_statify(Dict, Occupant, NewWeight, Id, HasFood))
     end.
 
 %% public api
-start(Id) -> start(Id, 1).
+start(Id) -> start(Id, 1, false).
 
-start(Id, Weight) when is_number(Weight) ->
-    spawn(fun () -> outer_loop({dict:new(), undefined, Weight, Id}) end).
+start(Id, Weight, HasFood) when is_number(Weight) ->
+    spawn(fun () -> outer_loop({dict:new(), undefined, Weight, Id, HasFood}) end).
 
 register_neighbor(Cell, Neighbor, Direction) when is_pid(Cell), is_pid(Neighbor) ->
     Cell ! {Neighbor, register_neighbor, Direction, true}.
@@ -110,10 +112,9 @@ at_edge(Cell) ->
 
 has_food(undefined) -> false;
 has_food(Cell) when is_pid(Cell) ->
-    {X,Y} = cell_id(Cell),
-    if
-        (X == 1000) and (Y < 500) -> true;
-        true -> false
+    Cell ! {has_food, self()},
+    receive
+        {food, Bool} -> Bool
     end.
 
 cell_weight(Cell) when is_pid(Cell) ->
