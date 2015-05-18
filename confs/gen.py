@@ -6,13 +6,13 @@
 #         return 'DEFAULT'
 
 # square in center
-def weight(x, y):
-    if x >= 400 and x <= 600 and y >= 500 and y <= 600:
-        return 100.0
-    else:
-        return 'DEFAULT'
+# def weight(x, y):
+#     if x >= 400 and x <= 600 and y >= 500 and y <= 600:
+#         return 100.0
+#     else:
+#         return 'DEFAULT'
 
-# close to top
+# # close to top
 def weight(x, y):
     if y >= 115 and y <= 135 and x >= 50 and x <= 70:
         return 100.0
@@ -20,10 +20,10 @@ def weight(x, y):
         return 'DEFAULT'
 
 if __name__ == "__main__":
-    xmax = 1000
-    ymax = 1000
-    numants = 2000
-    runtime = 30*60
+    xmax = 500
+    ymax = 500
+    numants = 500
+    runtime = 60
     default = 1.0
 
     f = open('confs/generated.conf', "w")

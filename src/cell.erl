@@ -112,7 +112,7 @@ has_food(undefined) -> false;
 has_food(Cell) when is_pid(Cell) ->
     {X,Y} = cell_id(Cell),
     if
-        (X == 70) and (Y < 50) -> true;
+        (X == 1000) and (Y < 500) -> true;
         true -> false
     end.
 

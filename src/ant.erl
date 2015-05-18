@@ -48,10 +48,10 @@ priv_got_neighbors(Neighbors, {_, CurrentCell, Reporter, StartingCell, Direction
     NormSmells = lists:map(fun(S) -> S / SSum end, Smells),
 
     %% compute cell move probability
-    Zipped = lists:zip(NormDists, NormSmells),
+    Zipped  = lists:zip(NormDists, NormSmells),
     Weights = lists:map(fun ({D, S}) -> DWeight*D + SWeight * S end, Zipped),
-    Sum = max(1, lists:sum(Weights)),
-    Probs = lists:map(fun (W) -> W / Sum end, Weights),
+    Sum     = max(1, lists:sum(Weights)),
+    Probs   = lists:map(fun (W) -> W / Sum end, Weights),
 
     Choice = priv_pick_neighbor(Cells, Probs),
     priv_do_weight_update(Reporter, Smells, CurrentCell),
