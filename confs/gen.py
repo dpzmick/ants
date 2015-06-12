@@ -14,13 +14,17 @@
 
 # # close to top
 def weight(x, y):
+
+    if x >= 50 and x <= 100 and y >= 50 and y <= 100:
+        return 'FOOD'
+
     if y >= 115 and y <= 135 and x >= 50 and x <= 70:
         return 100.0
     else:
         return 'DEFAULT'
 
 if __name__ == "__main__":
-    xmax = 500
+    xmax = 200
     ymax = 500
     numants = 500
     runtime = 60
@@ -39,7 +43,10 @@ if __name__ == "__main__":
         for y in xrange(1, ymax+1):
             v = weight(x,y)
 
-            if v != 'DEFAULT':
+            if v != 'FOOD' and v != 'DEFAULT':
                 f.write("%d,%d,%f\n" % (x,y,v))
+
+            if v == 'FOOD':
+                f.write("%d,%d,F\n" % (x,y))
 
     f.close()

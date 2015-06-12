@@ -43,7 +43,11 @@ start(ConfFileName, OutputDir) ->
     Ymax = sim_config:ymax(Conf),
     NumAnts = sim_config:numants(Conf),
     CellCoords = [{X,Y} || X <- lists:seq(1,Xmax), Y <- lists:seq(1,Ymax)],
-    Cells = array:from_list([cell:start({X,Y}, sim_config:cell_weight(Conf,X,Y)) || {X,Y} <- CellCoords]),
+    Cells = array:from_list([
+                             cell:start(
+                               {X,Y},
+                               sim_config:cell_weight(Conf,X,Y),
+                               sim_config:cell_has_food(Conf,X,Y)) || {X,Y} <- CellCoords]),
     iter(Xmax, Ymax, Cells, 0, 0),
 
     Ants = lists:map(

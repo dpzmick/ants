@@ -114,7 +114,7 @@ has_food(undefined) -> false;
 has_food(Cell) when is_pid(Cell) ->
     Cell ! {has_food, self()},
     receive
-        {food, Bool} -> Bool
+        {has_food, Bool} -> Bool
     end.
 
 cell_weight(Cell) when is_pid(Cell) ->
