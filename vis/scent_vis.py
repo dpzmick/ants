@@ -49,7 +49,10 @@ if __name__ == "__main__":
     for row in reader:
         x = int(row[0])
         y = int(row[1])
-        w = float(row[2])
+        try:
+            w = float(row[2])
+        except ValueError:
+            w = 100
 
         frame.set_scent_level(x,y,w)
 
@@ -64,7 +67,10 @@ if __name__ == "__main__":
         time = int(row[0])
         cell_x = int(row[1])
         cell_y = int(row[2])
-        weight = float(row[3])
+        try:
+            weight = float(row[3])
+        except ValueError:
+            weight = 100
 
         frame.set_scent_level(cell_x, cell_y, weight)
 
