@@ -97,10 +97,10 @@ inner_loop_helper(Waiter, State = {Id, CurrentCell, Reporter, StartingCell, Dire
                         Food ->
                             NewWeight = 1000.0,
                             reporter:report_cell_change(Reporter, os:timestamp(), cell:cell_id(Cell), NewWeight),
-                            reporter:report_got_home(Reporter, os:timestamp(), Id),
                             cell:set_weight(Cell, NewWeight),
                             loop(priv_statify(Id, Cell, Reporter, StartingCell, towards, 0.3, S));
                         Start ->
+                            reporter:report_got_home(Reporter, os:timestamp(), Id),
                             loop(priv_statify(Id, Cell, Reporter, StartingCell, away, D, 0.0));
                         AtEdge ->
                             loop(priv_statify(Id, Cell, Reporter, StartingCell,
